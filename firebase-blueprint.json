@@ -77,6 +77,21 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "type", "content", "placement", "active"]
+    },
+    "Cause": {
+      "title": "Cause",
+      "description": "Humanitarian or community support cause.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "goalAmount": { "type": "number" },
+        "currentAmount": { "type": "number" },
+        "supporters": { "type": "number" },
+        "urgent": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "description", "goalAmount", "currentAmount", "supporters", "urgent"]
     }
   },
   "firestore": {
@@ -99,6 +114,10 @@
     "ads/{adId}": {
       "schema": "Ad",
       "description": "Ad network creatives."
+    },
+    "causes/{causeId}": {
+      "schema": "Cause",
+      "description": "Humanitarian causes."
     },
     "settings/global": {
       "schema": "object",

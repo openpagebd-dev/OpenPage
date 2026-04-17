@@ -71,13 +71,22 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    function isValidCause(data) {
+      return data.title is string && data.title.size() <= 200 &&
+             data.description is string && data.description.size() <= 2000 &&
+             data.goalAmount is number &&
+             data.currentAmount is number &&
+             data.supporters is number &&
+             data.urgent is bool;
+    }
+
     // ===============================================================
     // Match Rules
     // ===============================================================
 
     match /users/{userId} {
-      // Simplified read rule to avoid recursive admin get calls on own profile
-      allow read: if isAuthenticated() && (request.auth.uid == userId || request.auth.token.email == "openpagebd@gmail.com");
+      // Allow individual read of self, or admin can read/list all
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'reader';
       allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) || isAdmin();
     }
@@ -87,6 +96,12 @@ service cloud.firestore {
       allow create: if isAuthenticated() && isValidArticle(request.resource.data) && request.resource.data.authorId == request.auth.uid;
       allow update: if isAuthenticated() && isValidArticle(request.resource.data) && (request.auth.uid == resource.data.authorId || isAdmin());
       allow delete: if isAdmin();
+    }
+
+    match /causes/{causeId} {
+      allow read: if true;
+      allow update: if isAuthenticated() && isValidCause(request.resource.data);
+      allow write: if isAdmin();
     }
 
     match /emergencies/{emergencyId} {

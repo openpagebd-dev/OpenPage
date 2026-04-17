@@ -17,7 +17,16 @@ import {
   LayoutDashboard,
   Zap,
   LogOut,
-  AlertCircle
+  AlertCircle,
+  Megaphone,
+  Heart,
+  Shield,
+  X,
+  Layout,
+  Key,
+  Eye,
+  BarChart4,
+  Plus
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getIntelligenceBriefing } from '@/lib/gemini';
@@ -28,18 +37,29 @@ const MapComponent = dynamic(() => import('@/components/map-component'), { ssr: 
 const NewsFeed = dynamic(() => import('@/components/news-feed'), { ssr: false });
 const BloodNetwork = dynamic(() => import('@/components/blood-network'), { ssr: false });
 const DemoSeeder = dynamic(() => import('@/components/demo-seeder'), { ssr: false });
+const AdminDashboard = dynamic(() => import('@/components/admin-dashboard'), { ssr: false });
+const CausesList = dynamic(() => import('@/components/causes-list'), { ssr: false });
+const AnalyticsDashboard = dynamic(() => import('@/components/analytics-dashboard'), { ssr: false });
+const ArticleSubmission = dynamic(() => import('@/components/article-submission'), { ssr: false });
 
 export default function Home() {
   const { user, profile, loading, isAdmin } = useFirebase();
-  const [activeTab, setActiveTab] = useState<'map' | 'news' | 'blood' | 'admin'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'news' | 'blood' | 'admin' | 'causes' | 'analytics'>('map');
   const [briefing, setBriefing] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState<null | 'notifications' | 'settings' | 'help'>(null);
-  const [notifications] = useState([
+  const [activeModal, setActiveModal] = useState<null | 'notifications' | 'settings' | 'help' | 'submit-content'>(null);
+  const [notifications, setNotifications] = useState([
     { id: 1, text: "Emergency O- blood needed at CMC", time: "2 min ago", unread: true },
     { id: 2, text: "AI Intelligence Briefing updated", time: "10 min ago", unread: false },
     { id: 3, text: "Local Grid expansion complete", time: "1 hour ago", unread: false },
   ]);
+
+  const trends = [
+    { tag: "#DhakaPower", count: "14.2k" },
+    { tag: "#BloodDonorHero", count: "8.9k" },
+    { tag: "#SylhetEvacuation", count: "12.1k" },
+    { tag: "#VanguardIntelligence", count: "5.4k" },
+  ];
 
   useEffect(() => {
     // Generate AI briefing if on Home/News
@@ -93,7 +113,9 @@ export default function Home() {
             { id: 'map', label: 'Live Map', icon: MapIcon },
             { id: 'news', label: 'News Feed', icon: Newspaper },
             { id: 'blood', label: 'Blood Network', icon: Droplets },
-            { id: 'admin', label: 'Dashboard', icon: LayoutDashboard },
+            { id: 'causes', label: 'Active Causes', icon: Shield },
+            { id: 'analytics', label: 'Intelligence', icon: BarChart4 },
+            { id: 'admin', label: 'Admin Ops', icon: LayoutDashboard },
           ].map((item) => (
             <button
               key={item.id}
@@ -130,8 +152,10 @@ export default function Home() {
                   )}
                 </div>
                 <div className="overflow-hidden">
-                  <div className="text-sm font-bold truncate">{user.displayName}</div>
-                  <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{profile?.role || 'Reader'}</div>
+                  <div className="text-sm font-bold truncate text-white">{user.displayName}</div>
+                  <div className={`text-[10px] font-black uppercase tracking-widest ${isAdmin ? 'text-orange-500' : 'text-zinc-500'}`}>
+                    {isAdmin ? 'System Administrator' : (profile?.role || 'Active Reader')}
+                  </div>
                 </div>
               </div>
               <button 
@@ -185,19 +209,42 @@ export default function Home() {
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute right-0 mt-3 w-80 bg-zinc-900 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden z-[3000]"
+                    className="absolute right-0 mt-3 w-80 bg-zinc-950 border border-zinc-800 rounded-3xl shadow-2xl overflow-hidden z-[3000]"
                   >
-                    <div className="p-4 border-b border-zinc-800 flex justify-between items-center">
-                      <span className="text-sm font-black uppercase tracking-widest text-orange-500">Alerts</span>
-                      <button className="text-[10px] text-zinc-500 hover:text-white uppercase font-bold">Clear All</button>
+                    <div className="p-4 border-b border-zinc-900 flex justify-between items-center bg-zinc-900/50 backdrop-blur-md">
+                      <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">Incoming Intel</span>
+                      {notifications.length > 0 && (
+                        <button 
+                          onClick={() => setNotifications([])}
+                          className="text-[10px] text-zinc-500 hover:text-white uppercase font-black"
+                        >
+                          Clear Sync
+                        </button>
+                      )}
                     </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notifications.map(n => (
-                        <div key={n.id} className={`p-4 border-b border-zinc-800/50 hover:bg-white/5 transition-colors cursor-pointer ${n.unread ? 'bg-orange-500/5' : ''}`}>
-                          <p className="text-sm text-zinc-200 mb-1">{n.text}</p>
-                          <span className="text-[10px] text-zinc-600 font-bold">{n.time}</span>
+                    <div className="max-h-96 overflow-y-auto p-2 space-y-2">
+                      {notifications.length > 0 ? notifications.map(n => (
+                        <motion.div 
+                          key={n.id} 
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer ${n.unread ? 'bg-orange-600/5 border-orange-500/20' : 'bg-zinc-900/50 border-zinc-800/50 hover:bg-zinc-900 hover:border-zinc-700'}`}
+                          onClick={() => {
+                            setNotifications(prev => prev.map(notif => notif.id === n.id ? {...notif, unread: false} : notif));
+                          }}
+                        >
+                          <p className="text-xs text-zinc-200 font-medium leading-relaxed mb-2">{n.text}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] text-zinc-600 font-black uppercase tracking-widest">{n.time}</span>
+                            {n.unread && <div className="w-1.5 h-1.5 bg-orange-600 rounded-full" />}
+                          </div>
+                        </motion.div>
+                      )) : (
+                        <div className="py-12 text-center opacity-40">
+                          <Eye className="w-8 h-8 mx-auto mb-3 text-zinc-700" />
+                          <p className="text-[10px] font-black uppercase tracking-widest text-zinc-600">No active transmissions</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -231,75 +278,131 @@ export default function Home() {
           )}
 
           {activeTab === 'news' && (
-            <div className="max-w-4xl mx-auto p-8 space-y-8">
-              {/* Intelligence Briefing Section */}
-              <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-orange-600/10 border border-orange-500/20 p-6 rounded-3xl relative overflow-hidden group"
-              >
-                <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-700">
-                  <Zap className="w-24 h-24 fill-orange-500" />
-                </div>
-                <div className="relative z-10">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">
-                      Intelligence Briefing
-                    </h2>
+            <div className="max-w-6xl mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
+              <div className="flex-1 space-y-8">
+                {/* News Action Header */}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-8 bg-orange-600 rounded-full" />
+                    <h2 className="text-3xl font-black uppercase italic tracking-tighter">Live Broadcasts</h2>
                   </div>
-                  <p className="text-lg md:text-xl font-bold text-white leading-relaxed">
-                    {briefing || "Our neural network is synthesizing today's key developments..."}
-                  </p>
-                </div>
-              </motion.div>
-
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Trending Stories</h2>
-                <div className="flex gap-2">
-                  {['Local', 'Global', 'Tech', 'Life'].map(cat => (
-                    <button key={cat} className="px-4 py-1.5 bg-zinc-900 border border-zinc-800 rounded-full text-xs font-bold text-zinc-400 hover:text-white hover:border-zinc-700 transition-all">
-                      {cat}
+                  {user && (
+                    <button 
+                      onClick={() => setActiveModal('submit-content')}
+                      className="flex items-center gap-2 px-6 py-3 bg-zinc-900 border border-zinc-800 hover:border-orange-500 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-white rounded-2xl transition-all"
+                    >
+                      <Plus className="w-4 h-4 text-orange-500" />
+                      Add News
                     </button>
-                  ))}
+                  )}
                 </div>
+
+                {/* Intelligence Briefing Section */}
+                <motion.div 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-orange-600/10 border border-orange-500/20 p-6 rounded-3xl relative overflow-hidden group"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-700">
+                    <Zap className="w-24 h-24 fill-orange-500" />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                      <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">
+                        Intelligence Briefing
+                      </h2>
+                    </div>
+                    <p className="text-lg md:text-xl font-bold text-white leading-relaxed">
+                      {briefing || "Our neural network is synthesizing today's key developments..."}
+                    </p>
+                  </div>
+                </motion.div>
+
+                <NewsFeed />
               </div>
 
-              <NewsFeed />
+              {/* Sidebar: Trends & Ads */}
+              <aside className="w-full lg:w-80 space-y-6">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">Trending Pulse</h3>
+                  <div className="space-y-4">
+                    {trends.map(trend => (
+                      <div key={trend.tag} className="group cursor-pointer">
+                        <div className="text-orange-500 font-bold group-hover:underline">{trend.tag}</div>
+                        <div className="text-[10px] text-zinc-500 uppercase font-black">{trend.count} reports</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Simulated Ad Placement */}
+                <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-700 rounded-3xl p-6 aspect-square flex flex-col justify-center items-center text-center group relative overflow-hidden">
+                  <div className="absolute inset-0 bg-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <Megaphone className="w-12 h-12 text-zinc-700 mb-4 group-hover:text-orange-500 transition-colors" />
+                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-1">Vanguard Ads</div>
+                  <div className="text-[10px] text-zinc-600 font-black uppercase">Your Campaign Here</div>
+                </div>
+              </aside>
+            </div>
+          )}
+
+          {activeTab === 'analytics' && <AnalyticsDashboard />}
+
+          {activeTab === 'admin' && (
+            <div className="max-w-6xl mx-auto p-4 md:p-8">
+              {!isAdmin ? (
+                <div className="max-w-2xl mx-auto py-20 text-center space-y-6">
+                  <div className="w-20 h-20 bg-zinc-900 rounded-3xl flex items-center justify-center mx-auto border border-zinc-800">
+                    <Shield className="w-10 h-10 text-zinc-700" />
+                  </div>
+                  <h2 className="text-3xl font-black uppercase tracking-tighter text-white italic">Access Restricted</h2>
+                  <p className="text-zinc-500 text-sm max-w-md mx-auto leading-relaxed">
+                    The Advanced Dashboard is only available to certified platform contributors and administrators. 
+                    Please return to your assigned news briefing or request a higher clearance level.
+                  </p>
+                  <button 
+                    onClick={() => setActiveTab('news')}
+                    className="px-8 py-3 bg-white text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:invert transition-all"
+                  >
+                    Return to Intel
+                  </button>
+                  <div className="pt-8 border-t border-zinc-900/50">
+                    <DemoSeeder />
+                  </div>
+                </div>
+              ) : (
+                <AdminDashboard />
+              )}
             </div>
           )}
 
           {activeTab === 'blood' && (
-            <div className="max-w-2xl mx-auto p-8 space-y-8">
+            <div className="max-w-2xl mx-auto p-4 md:p-8 space-y-8">
               <div className="text-center">
-                <Droplets className="w-12 h-12 text-red-600 mx-auto mb-4" />
-                <h2 className="text-3xl font-black uppercase">Blood Network</h2>
-                <p className="text-zinc-500 mt-2 text-sm italic">Every second counts. Every drop saved lives.</p>
+                <Droplets className="w-16 h-16 text-red-600 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(220,38,38,0.3)]" />
+                <h2 className="text-4xl font-black uppercase tracking-tighter italic text-white mb-2">Blood Network</h2>
+                <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest leading-relaxed">Every second counts. Every drop saves lives.</p>
               </div>
               <BloodNetwork />
             </div>
           )}
 
-          {activeTab === 'admin' && (
-            <div className="max-w-2xl mx-auto p-8 space-y-8">
-              <div className="text-center">
-                <LayoutDashboard className="w-16 h-16 text-zinc-800 mx-auto mb-6" />
-                <h2 className="text-2xl font-bold mb-2">Advance Dashboard</h2>
-                <p className="text-zinc-500 text-sm mb-6">
-                  {isAdmin 
-                    ? "Welcome to the Editorial Control Center. Access your tools below." 
-                    : "Access Restricted. You need Contributor or Admin permissions to view the Dashboard."}
+          {activeTab === 'causes' && (
+            <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Heart className="w-5 h-5 text-red-500 fill-red-500/20" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500">Humanity Direct</span>
+                  </div>
+                  <h2 className="text-5xl font-black uppercase tracking-tighter italic text-white">Critical Causes</h2>
+                </div>
+                <p className="text-zinc-500 text-xs md:text-sm font-medium max-w-sm border-l-2 border-zinc-800 pl-6 leading-relaxed">
+                  Support verified local humanitarian efforts through the OpenPage Direct Support Network.
                 </p>
-                {isAdmin && (
-                  <button className="px-8 py-3 bg-white text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:invert transition-all">
-                    Launch Editor
-                  </button>
-                )}
               </div>
-
-              <div className="pt-8 border-t border-zinc-900">
-                <DemoSeeder />
-              </div>
+              <CausesList />
             </div>
           )}
         </div>
@@ -329,45 +432,68 @@ export default function Home() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-zinc-950 border border-zinc-800 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl"
+              className="bg-zinc-950 border border-zinc-800 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-22xl relative"
             >
               <div className="p-8">
                 <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-black uppercase italic tracking-tight">Vanguard Settings</h2>
-                  <button onClick={() => setActiveModal(null)} className="p-2 hover:bg-zinc-900 rounded-full text-zinc-500">✕</button>
+                  <h2 className="text-2xl font-black uppercase italic tracking-tight text-white px-2 border-l-4 border-orange-600">Vanguard Settings</h2>
+                  <button onClick={() => setActiveModal(null)} className="p-2 hover:bg-zinc-900 rounded-full text-zinc-500 transition-colors">
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
                 
                 <div className="space-y-6">
-                  <div className="p-6 bg-zinc-900 rounded-3xl border border-zinc-800">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-4">Interface Density</h3>
+                  <div className="p-6 bg-zinc-900/50 rounded-3xl border border-zinc-800/50 hover:border-zinc-700 transition-all group">
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4 flex items-center gap-2">
+                       <Layout className="w-3.5 h-3.5" /> Interface Density
+                    </h3>
                     <div className="flex gap-2">
                       {['Minimal', 'Standard', 'Tactical'].map(d => (
-                        <button key={d} className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${d === 'Tactical' ? 'bg-orange-600 text-white' : 'bg-zinc-800 text-zinc-500'}`}>{d}</button>
+                        <button key={d} className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${d === 'Tactical' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}>{d}</button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="p-6 bg-zinc-900 rounded-3xl border border-zinc-800 flex items-center justify-between">
+                  <div className="p-6 bg-zinc-900/50 rounded-3xl border border-zinc-800/50 flex items-center justify-between group hover:border-zinc-700 transition-all">
                     <div>
-                      <h3 className="text-xs font-black uppercase tracking-widest text-white">Neural Mapping</h3>
-                      <p className="text-[10px] text-zinc-500 uppercase font-bold tracking-tight">Enable AI path prediction</p>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
+                        <Key className="w-3.5 h-3.5 text-zinc-500" /> Google Passkey
+                      </h3>
+                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter mt-1 leading-tight">Enhanced biometric platform security</p>
                     </div>
-                    <div className="w-12 h-6 bg-orange-600 rounded-full relative">
-                      <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
+                    <button 
+                      onClick={() => alert("Passkey Protocol Initiated via Google Identity.")}
+                      className="px-4 py-2 bg-zinc-800 text-[9px] font-black uppercase text-white hover:bg-zinc-700 rounded-xl transition-all"
+                    >
+                      Configure
+                    </button>
+                  </div>
+
+                  <div className="p-6 bg-zinc-900/50 rounded-3xl border border-zinc-800/50 flex items-center justify-between group hover:border-zinc-700 transition-all">
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
+                         <Zap className="w-3.5 h-3.5 text-orange-500" /> Neural Mapping
+                      </h3>
+                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter mt-1 leading-tight">AI-assisted visual path prediction</p>
+                    </div>
+                    <div className="w-12 h-6 bg-orange-600 rounded-full relative cursor-pointer shadow-inner">
+                      <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-md" />
                     </div>
                   </div>
 
-                  <div className="p-6 bg-zinc-900 rounded-3xl border border-zinc-800">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500 mb-2">Platform Node</h3>
-                    <div className="text-sm font-mono text-orange-500 truncate">ap-southeast-1.vanguard.openpage</div>
+                  <div className="p-6 bg-zinc-950 rounded-3xl border border-zinc-900/50">
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-2">Platform Node Identity</h3>
+                    <div className="text-xs font-mono text-zinc-500 truncate bg-black p-3 rounded-xl border border-zinc-900">
+                      ap-southeast-1.vanguard.openpage-v2
+                    </div>
                   </div>
                 </div>
 
                 <button 
                   onClick={() => setActiveModal(null)}
-                  className="w-full mt-8 py-4 bg-white text-black rounded-3xl font-black uppercase text-xs tracking-[0.2em] hover:invert transition-all"
+                  className="w-full mt-8 py-4 bg-white text-black rounded-3xl font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-600 hover:text-white transition-all shadow-xl"
                 >
-                  Sync & Close
+                  Confirm Sync
                 </button>
               </div>
             </motion.div>
@@ -419,6 +545,23 @@ export default function Home() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+
+        {activeModal === 'submit-content' && (
+          <ArticleSubmission 
+            onClose={() => setActiveModal(null)}
+            onSuccess={() => {
+              setNotifications(prev => [
+                { 
+                  id: Date.now(), 
+                  text: "Transmission successful. Content queued for editorial review.", 
+                  time: "Just now", 
+                  unread: true 
+                },
+                ...prev
+              ]);
+            }}
+          />
         )}
       </AnimatePresence>
     </div>

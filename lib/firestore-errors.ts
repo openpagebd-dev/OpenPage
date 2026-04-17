@@ -53,9 +53,11 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   const errorMessage = JSON.stringify(errInfo);
   
   // CRITICAL: We only throw for non-benign errors to avoid breaking the retry/listener logic.
-  // "CANCELLED" / "idle stream" errors are common in the sandbox environment and are handled by SDK retries.
+  // "CANCELLED" / "idle stream" / "unavailable" errors are common in the sandbox environment and are handled by SDK retries.
   const isBenign = errorMessageText.toLowerCase().includes('cancelled') || 
-                   errorMessageText.toLowerCase().includes('idle stream');
+                   errorMessageText.toLowerCase().includes('idle stream') ||
+                   errorMessageText.toLowerCase().includes('unavailable') ||
+                   errorMessageText.toLowerCase().includes('could not reach');
 
   if (!isBenign) {
     console.error('Firestore Error:', errorMessage);
