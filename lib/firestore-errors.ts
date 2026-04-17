@@ -61,8 +61,7 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     console.error('Firestore Error:', errorMessage);
     throw new Error(errorMessage);
   } else {
-    // Log as info/warn to reduce "error noise" for expected connection cycling
-    console.info('Firestore Stream Cycle:', errorMessage);
-    console.warn('Suppressing benign Firestore stream cancellation error to maintain connection stability.');
+    // Suppress noise for expected connection cycling in the sandbox
+    // console.info('Firestore Stream Cycle:', errorMessage);
   }
 }

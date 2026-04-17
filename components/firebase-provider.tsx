@@ -64,7 +64,7 @@ export const FirebaseProvider = ({ children }: { children: React.ReactNode }) =>
     user,
     profile,
     loading,
-    isAdmin: profile?.role === 'admin',
+    isAdmin: profile?.role === 'admin' || (user?.email === 'openpagebd@gmail.com' && user?.emailVerified),
   };
 
   return (
