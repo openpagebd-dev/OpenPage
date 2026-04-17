@@ -27,6 +27,7 @@ export const FirebaseProvider = ({ children }: { children: React.ReactNode }) =>
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
+      console.log("Auth State Changed. User:", user ? `${user.uid} (${user.email})` : "Logged Out");
       setUser(user);
       if (user) {
         // Fetch or create user profile
@@ -35,6 +36,7 @@ export const FirebaseProvider = ({ children }: { children: React.ReactNode }) =>
           if (docSnap.exists()) {
             setProfile(docSnap.data());
           } else {
+            console.log("No profile found. Creating reader profile for:", user.uid);
             // New user, create profile
             setDoc(userRef, {
               uid: user.uid,
@@ -43,10 +45,11 @@ export const FirebaseProvider = ({ children }: { children: React.ReactNode }) =>
               photoURL: user.photoURL,
               role: 'reader',
               createdAt: serverTimestamp(),
-            });
+            }).catch(e => handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}`));
           }
           setLoading(false);
         }, (error) => {
+          console.error("Profile Sync Error Detail:", error.message, "Path:", `users/${user.uid}`, "Current UID:", user.uid);
           handleFirestoreError(error, OperationType.GET, `users/${user.uid}`);
           setLoading(false);
         });
