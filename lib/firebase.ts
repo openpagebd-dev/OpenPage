@@ -1,9 +1,12 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore, doc, getDocFromServer, initializeFirestore } from 'firebase/firestore';
+import { getFirestore, doc, getDocFromServer, initializeFirestore, setLogLevel } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
+
+// Suppress transient connection logs from polluting the console
+setLogLevel('error');
 
 // Use initializeFirestore to set experimentalForceLongPolling for better stability in iframe/proxy environments
 export const db = initializeFirestore(app, {

@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where, limit } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, AlertCircle, Droplets, Info } from 'lucide-react';
+import { MapPin, AlertCircle, Droplets, Info, Hospital as HospitalIcon, Clock, Phone } from 'lucide-react';
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
@@ -19,7 +19,11 @@ import L from 'leaflet';
 
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
-const MapComponent = () => {
+interface MapComponentProps {
+  onViewDetails?: (node: any) => void;
+}
+
+const MapComponent = ({ onViewDetails }: MapComponentProps) => {
   const [markers, setMarkers] = useState<any[]>([]);
   const [center, setCenter] = useState<[number, number]>([23.8103, 90.4125]); // Default Dhaka
 
@@ -81,17 +85,33 @@ const MapComponent = () => {
   }, []);
 
   const getMarkerIcon = (type: string) => {
-    let color = '#f27d26'; // Default orange
-    if (type === 'emergency') color = '#ef4444';
-    if (type === 'blood_request') color = '#dc2626';
+    let color = 'text-orange-500';
+    let bgColor = 'bg-orange-500';
+    let pulseClass = '';
+    let icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
+
+    if (type === 'emergency') {
+      bgColor = 'bg-red-600';
+      pulseClass = 'emergency-pulse';
+      icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>';
+    } else if (type === 'blood_request') {
+      bgColor = 'bg-red-500';
+      icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5L12 2 8 9.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>';
+    }
 
     return L.divIcon({
-      html: `<div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center text-white ${type === 'emergency' ? 'emergency-pulse bg-red-600' : 'bg-orange-500'}">
-               ${type === 'blood_request' ? '<span class="text-xs font-bold">B+</span>' : '<i class="lucide-map-pin w-4 h-4"></i>'}
-             </div>`,
+      html: `
+        <div class="relative group cursor-pointer">
+          <div class="absolute inset-0 bg-white/20 rounded-full blur-sm group-hover:blur-md transition-all scale-110"></div>
+          <div class="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center text-white shadow-xl transition-all hover:scale-125 hover:-translate-y-1 active:scale-95 ${bgColor} ${pulseClass}">
+            ${icon}
+          </div>
+          <div class="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-zinc-950 scale-0 group-hover:scale-100 transition-transform duration-300"></div>
+        </div>
+      `,
       className: 'custom-div-icon',
-      iconSize: [32, 32],
-      iconAnchor: [16, 16]
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
     });
   };
 
@@ -114,14 +134,58 @@ const MapComponent = () => {
             icon={getMarkerIcon(marker.type)}
           >
             <Popup className="custom-popup">
-              <div className="p-2 min-w-[200px]">
-                <h3 className="font-bold text-lg mb-1">{marker.title}</h3>
-                <p className="text-sm text-zinc-600 mb-2 truncate">{marker.content || marker.description}</p>
-                <div className="flex items-center text-xs text-orange-600 font-semibold">
-                  {marker.type === 'article' && <Info className="w-3 h-3 mr-1" />}
-                  {marker.type === 'emergency' && <AlertCircle className="w-3 h-3 mr-1 text-red-500" />}
-                  {marker.type === 'blood_request' && <Droplets className="w-3 h-3 mr-1 text-red-600" />}
-                  {marker.type.toUpperCase()}
+              <div className="p-4 min-w-[240px] bg-zinc-950 text-white rounded-2xl border border-zinc-800 shadow-2xl">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${marker.type === 'emergency' ? 'bg-red-600' : marker.type === 'blood_request' ? 'bg-red-500' : 'bg-orange-500'}`}>
+                    {marker.type === 'article' && <Info className="w-4 h-4 text-white" />}
+                    {marker.type === 'emergency' && <AlertCircle className="w-4 h-4 text-white" />}
+                    {marker.type === 'blood_request' && <Droplets className="w-4 h-4 text-white" />}
+                  </div>
+                  <div>
+                    <h3 className="font-black uppercase italic tracking-tighter text-sm leading-none">{marker.title}</h3>
+                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">{marker.type}</p>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-zinc-400 leading-relaxed mb-4 line-clamp-3">
+                  {marker.content || marker.description}
+                </p>
+
+                {marker.type === 'blood_request' && (
+                  <div className="mb-4 p-3 bg-red-600/10 border border-red-600/20 rounded-xl space-y-2">
+                     <div className="flex items-center justify-between">
+                       <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Group</span>
+                       <span className="text-xs font-black text-white bg-red-600 px-1.5 py-0.5 rounded italic">{marker.bloodGroup || 'Any'}</span>
+                     </div>
+                     <div className="flex items-center gap-2">
+                       <HospitalIcon className="w-3 h-3 text-red-500" />
+                       <span className="text-[10px] font-bold text-zinc-300 truncate">{marker.hospital || 'Field Outpost'}</span>
+                     </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-3 border-t border-zinc-900">
+                  <span className="text-[9px] font-black uppercase tracking-widest text-zinc-600">
+                    {marker.createdAt ? new Date(marker.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                  </span>
+                  {marker.type === 'blood_request' ? (
+                    <button 
+                      onClick={(e) => {
+                        if (marker.contactInfo) window.location.href = `tel:${marker.contactInfo}`;
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white text-[9px] font-black uppercase tracking-widest rounded-lg hover:bg-red-500 transition-colors shadow-lg shadow-red-600/20"
+                    >
+                      <Phone className="w-3 h-3" />
+                      Initiate
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => onViewDetails?.(marker)}
+                      className="text-[9px] font-black uppercase tracking-widest text-orange-500 hover:text-white transition-colors"
+                    >
+                      View Details
+                    </button>
+                  )}
                 </div>
               </div>
             </Popup>
@@ -130,20 +194,29 @@ const MapComponent = () => {
       </MapContainer>
 
       {/* Map Legend/Overlay */}
-      <div className="absolute bottom-6 left-6 z-[1000] bg-zinc-950/80 backdrop-blur-md border border-zinc-800 p-4 rounded-2xl">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-3">Live Intelligence</h4>
-        <div className="space-y-2">
-          <div className="flex items-center text-sm">
-            <span className="w-3 h-3 bg-red-600 rounded-full mr-2 emergency-pulse"></span>
-            <span>Emergency Pulse</span>
+      <div className="absolute bottom-6 left-6 z-[1000] bg-zinc-950/90 backdrop-blur-xl border border-zinc-800 p-5 rounded-3xl shadow-2xl min-w-[200px]">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-1.5 h-4 bg-orange-600 rounded-full" />
+          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Node Intelligence</h4>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 bg-red-600 rounded-lg flex items-center justify-center emergency-pulse border border-white/20">
+              <AlertCircle className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white">Emergency Pulse</span>
           </div>
-          <div className="flex items-center text-sm">
-            <span className="w-3 h-3 bg-red-400 rounded-full mr-2"></span>
-            <span>Blood Network</span>
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center border border-white/20">
+              <Droplets className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white">Blood Network</span>
           </div>
-          <div className="flex items-center text-sm">
-            <span className="w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
-            <span>Local News</span>
+          <div className="flex items-center gap-3">
+            <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center border border-white/20">
+              <MapPin className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white">Verified Intel</span>
           </div>
         </div>
       </div>

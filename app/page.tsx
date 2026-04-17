@@ -41,13 +41,17 @@ const AdminDashboard = dynamic(() => import('@/components/admin-dashboard'), { s
 const CausesList = dynamic(() => import('@/components/causes-list'), { ssr: false });
 const AnalyticsDashboard = dynamic(() => import('@/components/analytics-dashboard'), { ssr: false });
 const ArticleSubmission = dynamic(() => import('@/components/article-submission'), { ssr: false });
+const BloodRequestModal = dynamic(() => import('@/components/blood-request-modal'), { ssr: false });
+const NodeDetailModal = dynamic(() => import('@/components/node-detail-modal'), { ssr: false });
 
 export default function Home() {
   const { user, profile, loading, isAdmin } = useFirebase();
   const [activeTab, setActiveTab] = useState<'map' | 'news' | 'blood' | 'admin' | 'causes' | 'analytics'>('map');
+  const [density, setDensity] = useState<'Minimal' | 'Standard' | 'Tactical'>('Tactical');
   const [briefing, setBriefing] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState<null | 'notifications' | 'settings' | 'help' | 'submit-content'>(null);
+  const [activeModal, setActiveModal] = useState<null | 'notifications' | 'settings' | 'help' | 'submit-content' | 'blood-request' | 'node-detail'>(null);
+  const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Emergency O- blood needed at CMC", time: "2 min ago", unread: true },
     { id: 2, text: "AI Intelligence Briefing updated", time: "10 min ago", unread: false },
@@ -92,8 +96,14 @@ export default function Home() {
     );
   }
 
+  const densityClasses = {
+    Minimal: "p-0",
+    Standard: "p-4 md:p-6",
+    Tactical: "p-6 md:p-10"
+  };
+
   return (
-    <div className="flex h-screen bg-zinc-950 text-white overflow-hidden">
+    <div className={`flex h-screen bg-zinc-950 text-white overflow-hidden ${density === 'Minimal' ? 'text-xs' : ''}`}>
       {/* Sidebar Navigation */}
       <aside className={`fixed lg:relative z-[2000] flex flex-col w-72 h-full bg-zinc-950 border-r border-zinc-900 transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 flex items-center justify-between">
@@ -260,20 +270,29 @@ export default function Home() {
           </div>
         </header>
 
-        {/* FAB for Help */}
+        {/* FAB for Help / Emergency */}
         <button 
           onClick={() => setActiveModal('help')}
-          className="fixed bottom-8 right-8 z-[1500] group flex items-center gap-3 bg-orange-600 hover:bg-orange-500 text-white p-4 rounded-full shadow-2xl shadow-orange-600/40 transition-all hover:scale-105 active:scale-95"
+          className={`fixed bottom-8 right-8 z-[2000] group flex items-center justify-center gap-3 transition-all hover:scale-105 active:scale-95 shadow-2xl ${
+            activeTab === 'map' 
+              ? 'bg-red-600 shadow-red-600/40 w-16 h-16 rounded-full emergency-pulse' 
+              : 'bg-orange-600 shadow-orange-600/40 p-4 rounded-full'
+          }`}
         >
-          <AlertCircle className="w-6 h-6 fill-white text-orange-600" />
-          <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-black uppercase text-xs tracking-widest whitespace-nowrap">Express Emergency</span>
+          <AlertCircle className={`w-6 h-6 fill-white ${activeTab === 'map' ? 'text-red-600' : 'text-orange-600'}`} />
+          {activeTab !== 'map' && (
+            <span className="max-w-0 overflow-hidden group-hover:max-w-xs transition-all duration-500 font-black uppercase text-xs tracking-widest whitespace-nowrap text-white">Express Emergency</span>
+          )}
         </button>
 
         {/* Dynamic Canvas / Viewport */}
-        <div className="flex-1 relative overflow-y-auto">
+        <div className={`flex-1 relative overflow-y-auto ${densityClasses[density]}`}>
           {activeTab === 'map' && (
             <div className="absolute inset-0 z-0">
-              <MapComponent />
+              <MapComponent onViewDetails={(node) => {
+                setSelectedNode(node);
+                setActiveModal('node-detail');
+              }} />
             </div>
           )}
 
@@ -384,7 +403,7 @@ export default function Home() {
                 <h2 className="text-4xl font-black uppercase tracking-tighter italic text-white mb-2">Blood Network</h2>
                 <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest leading-relaxed">Every second counts. Every drop saves lives.</p>
               </div>
-              <BloodNetwork />
+              <BloodNetwork onRequestBlood={() => setActiveModal('blood-request')} />
             </div>
           )}
 
@@ -408,17 +427,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Floating Action Button for Emergency */}
-      {activeTab === 'map' && (
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="fixed bottom-8 right-8 z-[2000] w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-2xl shadow-red-600/40 emergency-pulse"
-          onClick={() => alert("Reporting Emergency Interface Loading...")}
-        >
-          <AlertCircle className="w-8 h-8 text-white" />
-        </motion.button>
-      )}
       {/* Modals Layer */}
       <AnimatePresence>
         {activeModal === 'settings' && (
@@ -449,7 +457,13 @@ export default function Home() {
                     </h3>
                     <div className="flex gap-2">
                       {['Minimal', 'Standard', 'Tactical'].map(d => (
-                        <button key={d} className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${d === 'Tactical' ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}>{d}</button>
+                        <button 
+                          key={d} 
+                          onClick={() => setDensity(d as any)}
+                          className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${density === d ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}
+                        >
+                          {d}
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -560,6 +574,33 @@ export default function Home() {
                 },
                 ...prev
               ]);
+            }}
+          />
+        )}
+
+        {activeModal === 'blood-request' && (
+          <BloodRequestModal 
+            onClose={() => setActiveModal(null)}
+            onSuccess={() => {
+              setNotifications(prev => [
+                { 
+                  id: Date.now(), 
+                  text: "Blood emergency node activated. Broadcasting to donor network.", 
+                  time: "Just now", 
+                  unread: true 
+                },
+                ...prev
+              ]);
+            }}
+          />
+        )}
+
+        {activeModal === 'node-detail' && selectedNode && (
+          <NodeDetailModal 
+            node={selectedNode}
+            onClose={() => {
+              setActiveModal(null);
+              setSelectedNode(null);
             }}
           />
         )}

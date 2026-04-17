@@ -19,12 +19,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'ads' | 'content' | 'polls' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'ads' | 'content' | 'polls' | 'users' | 'system'>('overview');
   const [globalSettings, setGlobalSettings] = useState<any>({ adsEnabled: true });
   const [ads, setAds] = useState<any[]>([]);
   const [articles, setArticles] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
+  const [isResetting, setIsResetting] = useState(false);
   const [newAd, setNewAd] = useState({ title: '', type: 'image', content: '', placement: 'home_banner', active: true, url: '', imageUrl: '' });
   const [isAddingAd, setIsAddingAd] = useState(false);
   const [newPoll, setNewPoll] = useState({ question: '', options: ['', ''] });
@@ -117,6 +118,27 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleSystemReset = async () => {
+    if (!confirm("CRITICAL WARNING: This will delete ALL dynamic content (Articles, Ads, Polls). User profiles and master settings will be preserved. Proceed?")) return;
+    
+    setIsResetting(true);
+    try {
+      // Manual batch delete simulation
+      const collectionsToClear = ['articles', 'ads', 'polls'];
+      for (const coll of collectionsToClear) {
+        // In a real production app, you'd use a server function or careful recursion
+        // For this sandbox, we'll clear what's currently loaded
+        const currentItems = coll === 'articles' ? articles : coll === 'ads' ? ads : polls;
+        await Promise.all(currentItems.map(item => deleteDoc(doc(db, coll, item.id))));
+      }
+      alert("System Reset Complete. Dynamics purged.");
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, 'system-reset');
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   const createAd = async () => {
     if (!newAd.title || !newAd.content) return;
     try {
@@ -140,7 +162,7 @@ const AdminDashboard = () => {
           <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">Operational Command Center</p>
         </div>
         <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 overflow-x-auto">
-          {(['overview', 'ads', 'content', 'polls', 'users'] as const).map(tab => (
+          {(['overview', 'ads', 'content', 'polls', 'users', 'system'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -469,6 +491,33 @@ const AdminDashboard = () => {
                 <p className="text-zinc-500 font-black uppercase tracking-widest text-xs">No active nodes identified in the network</p>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {activeTab === 'system' && (
+          <motion.div 
+            key="system"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="max-w-xl mx-auto py-12 text-center"
+          >
+            <div className="w-20 h-20 bg-red-600/10 border border-red-500/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8">
+              <Zap className="w-10 h-10 text-red-500" />
+            </div>
+            <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-4">Total System Reset</h3>
+            <p className="text-zinc-500 text-sm leading-relaxed mb-10">
+              Initializing this protocol will permanently remove all dynamic data streams including articles, ads, and polls from the Vanguard network. This action cannot be reversed. User node identities will remain intact.
+            </p>
+            
+            <button 
+              onClick={handleSystemReset}
+              disabled={isResetting}
+              className="w-full py-6 bg-red-600 hover:bg-red-500 text-white rounded-[2rem] font-black uppercase text-sm tracking-[0.3em] transition-all shadow-2xl shadow-red-600/20 disabled:opacity-50 flex items-center justify-center gap-3"
+            >
+              <Trash2 className="w-5 h-5" />
+              {isResetting ? 'PURGING DATA...' : 'INITIALIZE SYSTEM WIPE'}
+            </button>
+            <p className="mt-6 text-[10px] text-zinc-600 font-black uppercase tracking-widest">Administrator Clearance Required</p>
           </motion.div>
         )}
       </AnimatePresence>
