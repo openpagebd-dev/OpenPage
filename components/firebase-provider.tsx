@@ -34,7 +34,14 @@ export const FirebaseProvider = ({ children }: { children: React.ReactNode }) =>
         const userRef = doc(db, 'users', user.uid);
         const unsubProfile = onSnapshot(userRef, (docSnap) => {
           if (docSnap.exists()) {
-            setProfile(docSnap.data());
+            const data = docSnap.data();
+            setProfile(data);
+            
+            // Correction: If this is the master admin but role is wrong in DB, fix it.
+            if (user.email === 'openpagebd@gmail.com' && data.role !== 'admin') {
+              console.log("Correcting admin role for master email...");
+              setDoc(userRef, { role: 'admin' }, { merge: true }).catch(console.error);
+            }
           } else {
             console.log("No profile found. Creating reader profile for:", user.uid);
             // New user, create profile
@@ -43,7 +50,7 @@ export const FirebaseProvider = ({ children }: { children: React.ReactNode }) =>
               displayName: user.displayName,
               email: user.email,
               photoURL: user.photoURL,
-              role: 'reader',
+              role: user.email === 'openpagebd@gmail.com' ? 'admin' : 'reader',
               createdAt: serverTimestamp(),
             }).catch(e => handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}`));
           }
