@@ -1,0 +1,6 @@
+{
+  "name": "OpenPage",
+  "description": "A high-velocity, immersive news and community response platform with real-time maps, blood donation network, and AI-powered intelligence.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["AI-powered insights", "Real-time community tracking"]
+}

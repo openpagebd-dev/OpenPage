@@ -1,0 +1,39 @@
+@import "tailwindcss";
+@import "@fontsource/hind-siliguri/index.css";
+
+:root {
+  --font-sans: "Hind Siliguri", "Inter", sans-serif;
+  --bg-obsidian: #050505;
+  --accent-orange: #f27d26;
+}
+
+body {
+  background-color: var(--bg-obsidian);
+  color: #ffffff;
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+/* Optimized for Bangla */
+[lang="bn"] {
+  line-height: 1.8;
+}
+
+.perspective-map {
+  perspective: 1000px;
+}
+
+.map-glow {
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Pulse animation for Emergency Pulse */
+@keyframes pulse-red {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.emergency-pulse {
+  animation: pulse-red 2s infinite;
+}

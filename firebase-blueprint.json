@@ -1,0 +1,108 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile with role-based access.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["reader", "contributor", "admin"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Article": {
+      "title": "Article",
+      "description": "News article or editorial content.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "category": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "views": { "type": "number" },
+        "reactions": { "type": "object" },
+        "location": { "type": "object" },
+        "status": { "type": "string", "enum": ["draft", "published"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "category", "authorId", "status"]
+    },
+    "Emergency": {
+      "title": "Emergency",
+      "description": "Emergency alert or blood request.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["emergency", "blood_request"] },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "location": { "type": "object" },
+        "contactInfo": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "hospital": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "resolved"] },
+        "acceptedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "title", "location", "status"]
+    },
+    "Poll": {
+      "title": "Poll",
+      "description": "Community public opinion poll.",
+      "type": "object",
+      "properties": {
+        "question": { "type": "string" },
+        "options": { "type": "array", "items": { "type": "string" } },
+        "votes": { "type": "object" },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["question", "options", "active"]
+    },
+    "Ad": {
+      "title": "Ad",
+      "description": "Advertisement creative configuration.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["image", "video", "script"] },
+        "content": { "type": "string" },
+        "placement": { "type": "string", "enum": ["home_banner", "sidebar", "article_middle"] },
+        "active": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "type", "content", "placement", "active"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profile data."
+    },
+    "articles/{articleId}": {
+      "schema": "Article",
+      "description": "News and editorial content."
+    },
+    "emergencies/{emergencyId}": {
+      "schema": "Emergency",
+      "description": "Emergency alerts and blood requests."
+    },
+    "polls/{pollId}": {
+      "schema": "Poll",
+      "description": "Community polls."
+    },
+    "ads/{adId}": {
+      "schema": "Ad",
+      "description": "Ad network creatives."
+    },
+    "settings/global": {
+      "schema": "object",
+      "description": "Global app settings including ad kill switch."
+    }
+  }
+}
