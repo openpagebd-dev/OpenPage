@@ -7,9 +7,8 @@ import { Droplets, ShieldCheck, Heart, Users, Plus, Phone, Hospital as HospitalI
 import { motion, AnimatePresence } from 'motion/react';
 
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
-import { calculateDistance } from '@/lib/utils';
 
-const BloodNetwork = ({ onRequestBlood, userProfile, geofenceRadius }: { onRequestBlood: () => void, userProfile?: any, geofenceRadius: number }) => {
+const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => void, userProfile?: any }) => {
   const [stats, setStats] = useState({ livesSaved: 124, activeRequests: 0, donors: 450 });
   const [urgentRequests, setUrgentRequests] = useState<any[]>([]);
   const [activeDonors, setActiveDonors] = useState<any[]>([]);
@@ -41,25 +40,7 @@ const BloodNetwork = ({ onRequestBlood, userProfile, geofenceRadius }: { onReque
     );
 
     const unsubUrgent = onSnapshot(qUrgent, (snapshot) => {
-      let requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Apply Geofencing if user location available
-      if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition((pos) => {
-          const userLat = pos.coords.latitude;
-          const userLng = pos.coords.longitude;
-          
-          const filtered = requests.filter((req: any) => {
-            if (!req.location) return true;
-            const dist = calculateDistance(userLat, userLng, req.location.lat, req.location.lng);
-            return dist <= geofenceRadius;
-          });
-          setUrgentRequests(filtered);
-        });
-      } else {
-        setUrgentRequests(requests);
-      }
-      
+      setUrgentRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setStats(prev => ({ ...prev, activeRequests: snapshot.size }));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'blood-requests');
@@ -81,7 +62,7 @@ const BloodNetwork = ({ onRequestBlood, userProfile, geofenceRadius }: { onReque
       unsubUrgent();
       unsubDonors();
     };
-  }, [geofenceRadius]);
+  }, []);
 
   const matchedRequests = urgentRequests.filter(req => 
     userProfile?.bloodGroup && isCompatible(userProfile.bloodGroup, req.bloodGroup)

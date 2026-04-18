@@ -26,7 +26,8 @@ import {
   Key,
   Eye,
   BarChart4,
-  Plus
+  Plus,
+  Users
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getIntelligenceBriefing } from '@/lib/gemini';
@@ -44,17 +45,15 @@ const ArticleSubmission = dynamic(() => import('@/components/article-submission'
 const BloodRequestModal = dynamic(() => import('@/components/blood-request-modal'), { ssr: false });
 const NodeDetailModal = dynamic(() => import('@/components/node-detail-modal'), { ssr: false });
 const ProfileModal = dynamic(() => import('@/components/profile-modal'), { ssr: false });
-const AIBriefing = dynamic(() => import('@/components/ai-briefing'), { ssr: false });
+const DonorDirectory = dynamic(() => import('@/components/donor-directory'), { ssr: false });
 
 export default function Home() {
   const { user, profile, loading, isAdmin } = useFirebase();
-  const [activeTab, setActiveTab] = useState<'map' | 'news' | 'blood' | 'admin' | 'causes' | 'analytics'>('map');
+  const [activeTab, setActiveTab] = useState<'map' | 'news' | 'blood' | 'admin' | 'causes' | 'analytics' | 'donors'>('map');
   const [density, setDensity] = useState<'Minimal' | 'Standard' | 'Tactical'>('Tactical');
   const [briefing, setBriefing] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<null | 'notifications' | 'settings' | 'help' | 'submit-content' | 'blood-request' | 'node-detail' | 'profile'>(null);
-  const [stealthMode, setStealthMode] = useState(false);
-  const [geofenceRadius, setGeofenceRadius] = useState(10); // km
   const [submissionConfig, setSubmissionConfig] = useState<{ category?: string, status?: string }>({});
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [notifications, setNotifications] = useState([
@@ -108,13 +107,7 @@ export default function Home() {
   };
 
   return (
-    <div className={`min-h-screen relative flex flex-col ${stealthMode ? 'stealth-mode bg-black' : 'bg-[#050505]'}`}>
-      {/* Scanline Overlay */}
-      <div className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.03]">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%]" />
-      </div>
-
-      <div className={`flex h-screen overflow-hidden ${density === 'Minimal' ? 'text-xs' : ''}`}>
+    <div className={`flex h-screen bg-zinc-950 text-white overflow-hidden ${density === 'Minimal' ? 'text-xs' : ''}`}>
       {/* Sidebar Navigation */}
       <aside className={`fixed lg:relative z-[2000] flex flex-col w-72 h-full bg-zinc-950 border-r border-zinc-900 transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 flex items-center justify-between">
@@ -134,6 +127,7 @@ export default function Home() {
             { id: 'map', label: 'Live Map', icon: MapIcon },
             { id: 'news', label: 'News Feed', icon: Newspaper },
             { id: 'blood', label: 'Blood Network', icon: Droplets },
+            { id: 'donors', label: 'Donor Directory', icon: Users },
             { id: 'causes', label: 'Active Causes', icon: Shield },
             { id: 'analytics', label: 'Intelligence', icon: BarChart4 },
             { id: 'admin', label: 'Admin Ops', icon: LayoutDashboard },
@@ -288,14 +282,9 @@ export default function Home() {
                   <span className="text-[10px] font-black uppercase text-white tracking-widest leading-none mb-1">
                     {profile?.displayName || user.displayName || 'Operative'}
                   </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[8px] font-bold uppercase text-orange-500 tracking-[0.2em] leading-none">
-                      {profile?.rank || 'Initiate'}
-                    </span>
-                    <span className="text-[8px] font-bold uppercase text-zinc-500 tracking-[0.2em] leading-none">
-                      • {profile?.reputation || 100} REP
-                    </span>
-                  </div>
+                  <span className="text-[8px] font-bold uppercase text-orange-500 tracking-[0.2em] leading-none">
+                    {profile?.bloodGroup || 'No Sig'}
+                  </span>
                 </div>
                 <div className="w-8 h-8 rounded-xl bg-orange-600 flex items-center justify-center overflow-hidden relative group-hover:shadow-lg group-hover:shadow-orange-600/20 transition-all">
                   {profile?.photoURL ? (
@@ -356,36 +345,32 @@ export default function Home() {
                 </div>
 
                 {/* Intelligence Briefing Section */}
-                <AIBriefing />
+                <motion.div 
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-orange-600/10 border border-orange-500/20 p-6 rounded-3xl relative overflow-hidden group"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-125 transition-transform duration-700">
+                    <Zap className="w-24 h-24 fill-orange-500" />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse" />
+                      <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500">
+                        Intelligence Briefing
+                      </h2>
+                    </div>
+                    <p className="text-lg md:text-xl font-bold text-white leading-relaxed">
+                      {briefing || "Our neural network is synthesizing today's key developments..."}
+                    </p>
+                  </div>
+                </motion.div>
+
                 <NewsFeed />
               </div>
 
               {/* Sidebar: Trends & Ads */}
               <aside className="w-full lg:w-80 space-y-6">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
-                  <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">Tactical Tuning</h3>
-                  <div className="space-y-6">
-                    <div>
-                      <label className="text-[10px] font-black uppercase text-zinc-600 mb-2 block tracking-widest">Geofence Radius (km)</label>
-                      <input 
-                        type="range" min="1" max="50" step="1" 
-                        value={geofenceRadius} 
-                        onChange={(e) => setGeofenceRadius(parseInt(e.target.value))}
-                        className="w-full h-1 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-orange-500"
-                      />
-                      <div className="text-[10px] text-orange-500 font-bold mt-1 text-right">{geofenceRadius} km</div>
-                    </div>
-                    
-                    <button 
-                      onClick={() => setStealthMode(!stealthMode)}
-                      className={`w-full py-3 rounded-xl border flex items-center justify-center gap-2 transition-all font-black text-[10px] uppercase tracking-widest ${stealthMode ? 'bg-orange-500 text-black border-orange-500' : 'bg-transparent text-zinc-500 border-zinc-800 hover:border-zinc-700'}`}
-                    >
-                      <Eye className={stealthMode ? 'w-4 h-4' : 'w-4 h-4'} />
-                      {stealthMode ? 'Disable Stealth' : 'Enable Stealth'}
-                    </button>
-                  </div>
-                </div>
-
                 <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
                   <h3 className="text-sm font-black uppercase tracking-widest text-zinc-500 mb-4">Trending Pulse</h3>
                   <div className="space-y-4">
@@ -470,9 +455,26 @@ export default function Home() {
               <CausesList />
             </div>
           )}
+
+          {activeTab === 'donors' && (
+            <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-10">
+              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Users className="w-5 h-5 text-orange-500 fill-orange-500/20" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">Global Network</span>
+                  </div>
+                  <h2 className="text-5xl font-black uppercase tracking-tighter italic text-white text-wrap md:text-nowrap">Donor Directory</h2>
+                </div>
+                <p className="text-zinc-500 text-xs md:text-sm font-medium max-w-sm border-l-2 border-zinc-800 pl-6 leading-relaxed">
+                  Search and connect with the Vanguard tactical donor network. Direct verified synchronization for emergency response.
+                </p>
+              </div>
+              <DonorDirectory />
+            </div>
+          )}
         </div>
       </main>
-    </div>
 
       {/* Modals Layer */}
       <AnimatePresence>

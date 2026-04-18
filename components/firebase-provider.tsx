@@ -50,13 +50,9 @@ export const FirebaseProvider = ({ children }: { children: React.ReactNode }) =>
               displayName: user.displayName,
               email: user.email,
               photoURL: user.photoURL,
-              role: user.email === 'openpagebd@gmail.com' ? 'admin' : 'contributor',
+              role: user.email === 'openpagebd@gmail.com' ? 'admin' : 'reader',
               bloodGroup: null,
               isDonor: false,
-              reputation: 100,
-              xp: 0,
-              rank: 'Initiate',
-              commendationsCount: 0,
               createdAt: serverTimestamp(),
             }).catch(e => handleFirestoreError(e, OperationType.WRITE, `users/${user.uid}`));
           }

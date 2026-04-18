@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot, query, where, limit } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { MapPin, AlertCircle, Droplets, Info, Hospital as HospitalIcon, Clock, Phone, ShieldCheck, Pill, Thermometer } from 'lucide-react';
+import { MapPin, AlertCircle, Droplets, Info, Hospital as HospitalIcon, Clock, Phone } from 'lucide-react';
 
 // Dynamically import Leaflet components to avoid SSR issues
 const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
@@ -78,26 +78,9 @@ const MapComponent = ({ onViewDetails }: MapComponentProps) => {
       handleFirestoreError(error, OperationType.LIST, 'emergencies-map');
     });
 
-    // Real-time listener for supply nodes (Safe Zones)
-    const qSupplyNodes = query(collection(db, 'supplyNodes'));
-    const unsubSupplyNodes = onSnapshot(qSupplyNodes, (snapshot) => {
-      const supplyMarkers = snapshot.docs.map(doc => ({
-        id: doc.id,
-        type: 'supply',
-        ...doc.data()
-      }));
-      setMarkers(current => {
-        const others = current.filter(m => m.type !== 'supply');
-        return [...others, ...supplyMarkers];
-      });
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'supply-nodes-map');
-    });
-
     return () => {
       unsubArticles();
       unsubEmergencies();
-      unsubSupplyNodes();
     };
   }, []);
 
@@ -114,9 +97,6 @@ const MapComponent = ({ onViewDetails }: MapComponentProps) => {
     } else if (type === 'blood_request') {
       bgColor = 'bg-red-500';
       icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5L12 2 8 9.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>';
-    } else if (type === 'supply') {
-      bgColor = 'bg-emerald-500';
-      icon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>';
     }
 
     return L.divIcon({
@@ -237,12 +217,6 @@ const MapComponent = ({ onViewDetails }: MapComponentProps) => {
               <MapPin className="w-3.5 h-3.5 text-white" />
             </div>
             <span className="text-[10px] font-black uppercase tracking-widest text-white">Verified Intel</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-emerald-500 rounded-lg flex items-center justify-center border border-white/20">
-              <ShieldCheck className="w-3.5 h-3.5 text-white" />
-            </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white">Safe Zone / Supplies</span>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, where, doc, updateDoc, increment, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone, Zap, ShieldCheck } from 'lucide-react';
+import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone, Zap } from 'lucide-react';
 import Image from 'next/image';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
@@ -147,7 +147,6 @@ const NewsFeed = () => {
     { type: 'heart', icon: <Heart className="w-3.5 h-3.5" />, color: 'hover:text-red-500' },
     { type: 'insight', icon: <Lightbulb className="w-3.5 h-3.5" />, color: 'hover:text-yellow-500' },
     { type: 'warning', icon: <AlertTriangle className="w-3.5 h-3.5" />, color: 'hover:text-red-600' },
-    { type: 'commend', icon: <ShieldCheck className="w-3.5 h-3.5" />, color: 'hover:text-emerald-500' },
   ];
 
   return (
@@ -177,15 +176,6 @@ const NewsFeed = () => {
                 <div className="p-6 md:p-8 flex flex-col justify-between flex-1">
                   <div>
                     <div className="flex items-center gap-3 mb-4 flex-wrap">
-                      <div className="flex items-center gap-2 px-2 py-1 bg-zinc-900 border border-zinc-800 rounded-lg mr-2">
-                        <div className="w-6 h-6 rounded bg-orange-600 flex items-center justify-center text-[8px] font-black text-white shrink-0">
-                          {article.authorName[0]}
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-[10px] font-black uppercase text-white leading-none">{article.authorName}</span>
-                          <span className="text-[8px] font-bold text-orange-500/80 uppercase tracking-tighter leading-none mt-0.5">Operative • Rank {article.authorRank || 'B1'}</span>
-                        </div>
-                      </div>
                       <span className="px-3 py-1 bg-orange-600/10 text-orange-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-orange-500/20">
                         {article.category || 'Intelligence'}
                       </span>
