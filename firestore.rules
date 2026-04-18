@@ -125,6 +125,17 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /supplyNodes/{nodeId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /briefings/{briefingId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
     match /settings/global {
       allow read: if true;
       allow write: if isAdmin();

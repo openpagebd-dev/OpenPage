@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import { X, User, Mail, Shield, Droplets, MapPin, Save, LogOut, Heart } from 'lucide-react';
+import { X, User, Mail, Shield, Droplets, MapPin, Save, LogOut, Heart, Zap } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 import { signOut } from 'firebase/auth';
 
@@ -53,7 +53,7 @@ const ProfileModal = ({ profile, onClose }: ProfileModalProps) => {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-zinc-950 border border-zinc-800 w-full max-w-md rounded-[2.5rem] overflow-hidden shadow-2xl relative"
+        className="bg-zinc-950 border border-zinc-800 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl relative"
       >
         <div className="p-8">
           <div className="flex justify-between items-center mb-8">
@@ -69,6 +69,19 @@ const ProfileModal = ({ profile, onClose }: ProfileModalProps) => {
             <button onClick={onClose} className="p-2 hover:bg-zinc-900 rounded-full text-zinc-500 transition-colors">
               <X className="w-5 h-5" />
             </button>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
+              <Shield className="w-6 h-6 text-orange-500 mb-2" />
+              <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Node Rank</div>
+              <div className="text-xl font-black text-white italic tracking-tighter uppercase">{profile?.rank || 'Initiate'}</div>
+            </div>
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col items-center justify-center text-center">
+              <Zap className="w-6 h-6 text-orange-500 mb-2" />
+              <div className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Reputation</div>
+              <div className="text-xl font-black text-white italic tracking-tighter uppercase">{profile?.reputation || 100} XP</div>
+            </div>
           </div>
 
           <form onSubmit={handleUpdate} className="space-y-6">

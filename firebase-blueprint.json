@@ -13,6 +13,10 @@
         "bloodGroup": { "type": "string", "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
         "isDonor": { "type": "boolean" },
         "location": { "type": "object" },
+        "reputation": { "type": "number" },
+        "xp": { "type": "number" },
+        "rank": { "type": "string" },
+        "commendationsCount": { "type": "number" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email", "role"]
@@ -31,6 +35,7 @@
         "views": { "type": "number" },
         "reactions": { "type": "object" },
         "location": { "type": "object" },
+        "itemStatus": { "type": "string", "enum": ["Pending", "Solved", "Failed"] },
         "status": { "type": "string", "enum": ["draft", "published"] },
         "createdAt": { "type": "string", "format": "date-time" }
       },
@@ -45,6 +50,7 @@
         "title": { "type": "string" },
         "description": { "type": "string" },
         "location": { "type": "object" },
+        "radius": { "type": "number" },
         "contactInfo": { "type": "string" },
         "bloodGroup": { "type": "string" },
         "hospital": { "type": "string" },
@@ -53,6 +59,31 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["type", "title", "location", "status"]
+    },
+    "SupplyNode": {
+      "title": "Supply Node",
+      "description": "Pharmacy, Oxygen Bank, or Shelter.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "type": { "type": "string", "enum": ["Pharmacy", "Oxygen Bank", "Shelter", "Food Bank"] },
+        "status": { "type": "string", "enum": ["Available", "Low Stock", "Out of Stock"] },
+        "location": { "type": "object" },
+        "contact": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "type", "status", "location"]
+    },
+    "SystemBriefing": {
+      "title": "System Briefing",
+      "description": "AI generated tactical summary.",
+      "type": "object",
+      "properties": {
+        "content": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "mood": { "type": "string" }
+      },
+      "required": ["content", "timestamp"]
     },
     "Poll": {
       "title": "Poll",
@@ -109,6 +140,14 @@
     "emergencies/{emergencyId}": {
       "schema": "Emergency",
       "description": "Emergency alerts and blood requests."
+    },
+    "supplyNodes/{nodeId}": {
+      "schema": "SupplyNode",
+      "description": "Critical supply nodes like oxygen or pharmacies."
+    },
+    "briefings/{briefingId}": {
+      "schema": "SystemBriefing",
+      "description": "AI-generated tactical briefings."
     },
     "polls/{pollId}": {
       "schema": "Poll",

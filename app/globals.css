@@ -54,13 +54,49 @@ body {
   font-family: var(--font-sans) !important;
 }
 
-/* Pulse animation for Emergency Pulse */
-@keyframes pulse-red {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+/* Tactical UI Animations */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
 }
 
-.emergency-pulse {
-  animation: pulse-red 2s infinite;
+.animate-scanline {
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes glitch {
+  0% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(-2px, -2px); }
+  60% { transform: translate(2px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  100% { transform: translate(0); }
+}
+
+.vanguard-glitch:hover {
+  animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) both infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
+
+.stealth-mode {
+  filter: grayscale(1) contrast(1.2);
+}
+
+.vanguard-border {
+  border: 1px solid rgba(242, 125, 38, 0.1);
+  background: linear-gradient(135deg, rgba(10,10,11,1) 0%, rgba(20,20,22,1) 100%);
+}
+
+.vanguard-border:hover {
+  border-color: rgba(242, 125, 38, 0.4);
+  box-shadow: 0 0 20px rgba(242, 125, 38, 0.05);
 }
