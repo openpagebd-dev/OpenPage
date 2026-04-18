@@ -13,14 +13,16 @@ import {
   Megaphone, 
   BarChart3, 
   FileText,
-  Save
+  Save,
+  X,
+  Edit
 } from 'lucide-react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'ads' | 'content' | 'polls' | 'users' | 'system'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'ads' | 'content' | 'polls' | 'users' | 'system' | 'emergencies' | 'causes'>('overview');
   const [globalSettings, setGlobalSettings] = useState<any>({ adsEnabled: true });
   const [ads, setAds] = useState<any[]>([]);
   const [articles, setArticles] = useState<any[]>([]);
@@ -29,9 +31,15 @@ const AdminDashboard = () => {
   const [causes, setCauses] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isResetting, setIsResetting] = useState(false);
+  
+  // Editorial and Management States
+  const [editingItem, setEditingItem] = useState<{ id: string, coll: string, data: any } | null>(null);
+  
   const [newAd, setNewAd] = useState({ title: '', type: 'image', content: '', placement: 'home_banner', active: true, url: '', imageUrl: '' });
   const [isAddingAd, setIsAddingAd] = useState(false);
   const [newPoll, setNewPoll] = useState({ question: '', options: ['', ''] });
+  const [newEmergency, setNewEmergency] = useState({ type: 'blood_request', title: '', hospital: '', bloodGroup: 'B+', contactInfo: '', status: 'active', description: '' });
+  const [newCause, setNewCause] = useState({ title: '', description: '', goal: 1000, raised: 0, active: true, imageUrl: '' });
 
   useEffect(() => {
     // Global Settings Listener
@@ -122,10 +130,56 @@ const AdminDashboard = () => {
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: string) => {
+  const updateDocGeneric = async (coll: string, id: string, data: any) => {
+    try {
+      await updateDoc(doc(db, coll, id), { ...data, updatedAt: serverTimestamp() });
+      setEditingItem(null);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `${coll}-${id}`);
+    }
+  };
+
+  const createEmergency = async () => {
+    if (!newEmergency.title || !newEmergency.hospital) return;
+    try {
+      await addDoc(collection(db, 'emergencies'), {
+        ...newEmergency,
+        createdAt: serverTimestamp()
+      });
+      setNewEmergency({ type: 'blood_request', title: '', hospital: '', bloodGroup: 'B+', contactInfo: '', status: 'active', description: '' });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, 'emergencies');
+    }
+  };
+
+  const createCause = async () => {
+    if (!newCause.title) return;
+    try {
+      await addDoc(collection(db, 'causes'), {
+        ...newCause,
+        createdAt: serverTimestamp()
+      });
+      setNewCause({ title: '', description: '', goal: 1000, raised: 0, active: true, imageUrl: '' });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, 'causes');
+    }
+  };
+
+  const toggleUserDonorStatus = async (userId: string, currentStatus: boolean) => {
     try {
       await updateDoc(doc(db, 'users', userId), { 
-        role: newRole,
+        isDonor: !currentStatus,
+        updatedAt: serverTimestamp()
+      });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `users/${userId}`);
+    }
+  };
+
+  const updateUserBloodGroup = async (userId: string, bloodGroup: string) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), { 
+        bloodGroup,
         updatedAt: serverTimestamp()
       });
     } catch (e) {
@@ -179,7 +233,7 @@ const AdminDashboard = () => {
           <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">Operational Command Center</p>
         </div>
         <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 overflow-x-auto">
-          {(['overview', 'ads', 'content', 'polls', 'users', 'system'] as const).map(tab => (
+          {(['overview', 'ads', 'content', 'polls', 'emergencies', 'causes', 'users', 'system'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -312,6 +366,14 @@ const AdminDashboard = () => {
                     <p className="text-[10px] text-zinc-500 truncate font-mono">{ad.content}</p>
                   </div>
                   <div className="flex items-center justify-between mt-6 pt-4 border-t border-zinc-800">
+                    <div className="flex gap-2">
+                       <button 
+                        onClick={() => setEditingItem({ id: ad.id, coll: 'ads', data: ad })}
+                        className="text-zinc-500 hover:text-white"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </div>
                     <span className="text-[10px] font-bold text-zinc-500 uppercase">{ad.type}</span>
                     <div className={`flex items-center gap-2 ${ad.active ? 'text-green-500' : 'text-zinc-600'}`}>
                       <span className="text-[8px] font-black uppercase tracking-tighter">{ad.active ? 'Active' : 'Paused'}</span>
@@ -351,6 +413,12 @@ const AdminDashboard = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setEditingItem({ id: article.id, coll: 'articles', data: article })}
+                    className="p-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-xl transition-all"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
                   {article.status === 'pending' && (
                     <button 
                       onClick={() => approveArticle(article.id)}
@@ -439,9 +507,17 @@ const AdminDashboard = () => {
                       ))}
                     </div>
                   </div>
-                  <button onClick={() => deleteDocGeneric('polls', poll.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setEditingItem({ id: poll.id, coll: 'polls', data: poll })}
+                      className="p-2 text-zinc-500 hover:text-white"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteDocGeneric('polls', poll.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -482,23 +558,37 @@ const AdminDashboard = () => {
 
                   <div className="space-y-3 pt-4 border-t border-zinc-800/50">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Privilege Level</span>
-                      <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-                        userItem.role === 'admin' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 
-                        userItem.role === 'contributor' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 
-                        'bg-blue-500/10 text-blue-500 border-blue-500/20'
-                      }`}>
-                        {userItem.role}
-                      </span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Privilege & Network</span>
+                      <button 
+                         onClick={() => toggleUserDonorStatus(userItem.id, userItem.isDonor)}
+                         className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${userItem.isDonor ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-zinc-800 text-zinc-600 border-zinc-700'}`}
+                      >
+                        {userItem.isDonor ? 'ACTIVE DONOR' : 'NOT DONOR'}
+                      </button>
+                    </div>
+
+                    <div className="flex gap-1 overflow-x-auto pb-2 scrollbar-hide">
+                      {(['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'] as const).map(bg => (
+                        <button
+                          key={bg}
+                          onClick={() => updateUserBloodGroup(userItem.id, bg)}
+                          className={`flex-shrink-0 w-8 h-8 rounded-lg text-[9px] font-black border transition-all ${userItem.bloodGroup === bg ? 'bg-orange-600 border-orange-500 text-white' : 'bg-zinc-800 border-zinc-700 text-zinc-500'}`}
+                        >
+                          {bg}
+                        </button>
+                      ))}
                     </div>
 
                     <div className="flex gap-2">
                       {(['reader', 'contributor', 'admin'] as const).map(role => (
                         <button
                           key={role}
-                          onClick={() => updateUserRole(userItem.id, role)}
+                          onClick={() => {
+                            // Re-using the logic from previous role update if I can find it or just update it
+                            updateDocGeneric('users', userItem.id, { role });
+                          }}
                           disabled={userItem.email === 'openpagebd@gmail.com'}
-                          className={`flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${
+                          className={`flex-1 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all ${
                             userItem.role === role ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-500 hover:text-white'
                           } disabled:opacity-30 disabled:cursor-not-allowed`}
                         >
@@ -516,6 +606,163 @@ const AdminDashboard = () => {
                 <p className="text-zinc-500 font-black uppercase tracking-widest text-xs">No active nodes identified in the network</p>
               </div>
             )}
+          </motion.div>
+        )}
+
+        {activeTab === 'emergencies' && (
+          <motion.div 
+            key="emergencies"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            <div className="lg:col-span-1 bg-zinc-950 border border-zinc-800 p-8 rounded-[2.5rem] shadow-xl h-fit">
+              <h3 className="text-lg font-black uppercase mb-6 tracking-tight">Post Emergency</h3>
+              <div className="space-y-4 mb-6">
+                <input 
+                  type="text" 
+                  placeholder="Patient Name / Title"
+                  className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
+                  value={newEmergency.title}
+                  onChange={e => setNewEmergency({...newEmergency, title: e.target.value})}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Hospital / Location"
+                  className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
+                  value={newEmergency.hospital}
+                  onChange={e => setNewEmergency({...newEmergency, hospital: e.target.value})}
+                />
+                <div className="grid grid-cols-2 gap-2">
+                   <select 
+                    className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm appearance-none"
+                    value={newEmergency.bloodGroup}
+                    onChange={e => setNewEmergency({...newEmergency, bloodGroup: e.target.value})}
+                  >
+                    {['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'].map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                  </select>
+                  <select 
+                    className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm appearance-none"
+                    value={newEmergency.type}
+                    onChange={e => setNewEmergency({...newEmergency, type: e.target.value as any})}
+                  >
+                    <option value="blood_request">Blood Request</option>
+                    <option value="emergency">General Emergency</option>
+                  </select>
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Contact Info"
+                  className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
+                  value={newEmergency.contactInfo}
+                  onChange={e => setNewEmergency({...newEmergency, contactInfo: e.target.value})}
+                />
+              </div>
+              <button 
+                onClick={createEmergency}
+                className="w-full py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-red-600/20"
+              >
+                Broadcast Alert
+              </button>
+            </div>
+
+            <div className="lg:col-span-2 space-y-4">
+              {emergencies.map(em => (
+                <div key={em.id} className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] flex items-center justify-between group">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black ${em.type === 'blood_request' ? 'bg-red-600/20 text-red-500' : 'bg-orange-600/20 text-orange-500'}`}>
+                      {em.bloodGroup || 'EM'}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white mb-1">{em.title}</h4>
+                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">{em.hospital} • {em.status}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setEditingItem({ id: em.id, coll: 'emergencies', data: em })}
+                      className="p-2 text-zinc-500 hover:text-white"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteDocGeneric('emergencies', em.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'causes' && (
+          <motion.div 
+            key="causes"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            <div className="lg:col-span-1 bg-zinc-950 border border-zinc-800 p-8 rounded-[2.5rem] shadow-xl h-fit">
+              <h3 className="text-lg font-black uppercase mb-6 tracking-tight">Initiate Cause</h3>
+              <div className="space-y-4 mb-6">
+                <input 
+                  type="text" 
+                  placeholder="Cause Title"
+                  className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
+                  value={newCause.title}
+                  onChange={e => setNewCause({...newCause, title: e.target.value})}
+                />
+                <textarea 
+                  placeholder="Description..."
+                  className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm min-h-[100px]"
+                  value={newCause.description}
+                  onChange={e => setNewCause({...newCause, description: e.target.value})}
+                />
+                <input 
+                  type="number" 
+                  placeholder="Goal Amount"
+                  className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
+                  value={newCause.goal}
+                  onChange={e => setNewCause({...newCause, goal: parseInt(e.target.value)})}
+                />
+              </div>
+              <button 
+                onClick={createCause}
+                className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+              >
+                Launch Campaign
+              </button>
+            </div>
+
+            <div className="lg:col-span-2 space-y-4">
+              {causes.map(cause => (
+                <div key={cause.id} className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] flex items-center justify-between group">
+                  <div className="flex-1">
+                    <h4 className="font-bold text-white mb-2">{cause.title}</h4>
+                    <div className="flex items-center gap-4">
+                      <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">RAISED: ${cause.raised} / ${cause.goal}</div>
+                      <div className="flex-1 h-1.5 bg-zinc-800 rounded-full max-w-[200px] overflow-hidden">
+                        <div 
+                          className="h-full bg-orange-600" 
+                          style={{ width: `${Math.min(100, (cause.raised / cause.goal) * 100)}%` }} 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setEditingItem({ id: cause.id, coll: 'causes', data: cause })}
+                      className="p-2 text-zinc-500 hover:text-white"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteDocGeneric('causes', cause.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </motion.div>
         )}
 
@@ -543,6 +790,92 @@ const AdminDashboard = () => {
               {isResetting ? 'PURGING DATA...' : 'INITIALIZE SYSTEM WIPE'}
             </button>
             <p className="mt-6 text-[10px] text-zinc-600 font-black uppercase tracking-widest">Administrator Clearance Required</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Editorial Override Overlay */}
+      <AnimatePresence>
+        {editingItem && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[6000] bg-black/90 backdrop-blur-xl flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              className="bg-zinc-950 border border-zinc-800 w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-2xl"
+            >
+              <div className="p-10">
+                <div className="flex justify-between items-center mb-8">
+                  <div>
+                    <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Editorial Override</h3>
+                    <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mt-1">Modifying {editingItem.coll} node: {editingItem.id}</p>
+                  </div>
+                  <button onClick={() => setEditingItem(null)} className="p-3 hover:bg-zinc-900 rounded-full text-zinc-500">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 scrollbar-hide">
+                  {Object.keys(editingItem.data).map(key => {
+                    if (['id', 'createdAt', 'updatedAt', 'authorId', 'reactions'].includes(key)) return null;
+                    
+                    const val = editingItem.data[key];
+                    if (typeof val === 'object' && !Array.isArray(val)) return null;
+
+                    return (
+                      <div key={key} className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2">{key.replace(/([A-Z])/g, ' $1')}</label>
+                        {typeof val === 'boolean' ? (
+                           <button 
+                            onClick={() => setEditingItem({...editingItem, data: {...editingItem.data, [key]: !val}})}
+                            className={`w-full p-4 rounded-2xl border flex items-center justify-between transition-all ${val ? 'bg-orange-600/10 border-orange-500/50 text-orange-500' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}
+                           >
+                            <span className="font-bold text-sm uppercase tracking-widest">{key}</span>
+                            {val ? <ToggleRight className="w-6 h-6" /> : <ToggleLeft className="w-6 h-6" />}
+                           </button>
+                        ) : key === 'content' || key === 'description' ? (
+                          <textarea 
+                            className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm min-h-[120px]"
+                            value={val}
+                            onChange={e => setEditingItem({...editingItem, data: {...editingItem.data, [key]: e.target.value}})}
+                          />
+                        ) : Array.isArray(val) ? (
+                           <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-[10px] text-zinc-600 font-mono">
+                             Array data editing not supported in this vector.
+                           </div>
+                        ) : (
+                          <input 
+                            type={typeof val === 'number' ? 'number' : 'text'}
+                            className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
+                            value={val}
+                            onChange={e => setEditingItem({...editingItem, data: {...editingItem.data, [key]: typeof val === 'number' ? parseInt(e.target.value) : e.target.value}})}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-4 mt-10">
+                   <button 
+                    onClick={() => setEditingItem(null)}
+                    className="flex-1 py-4 bg-zinc-900 text-zinc-500 rounded-2xl font-black uppercase text-xs tracking-widest border border-zinc-800 hover:bg-zinc-800 transition-all"
+                  >
+                    Abort
+                  </button>
+                  <button 
+                    onClick={() => updateDocGeneric(editingItem.coll, editingItem.id, editingItem.data)}
+                    className="flex-1 py-4 bg-orange-600 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-orange-500 transition-all shadow-xl shadow-orange-600/20"
+                  >
+                    Commit Changes
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
