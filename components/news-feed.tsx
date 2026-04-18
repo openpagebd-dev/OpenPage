@@ -162,20 +162,20 @@ const NewsFeed = () => {
             >
               <div className="md:flex">
                 {article.imageUrl && !article.media?.length && (
-                  <div className="relative h-56 md:h-auto md:w-2/5 shrink-0 overflow-hidden">
+                  <div className="relative h-64 md:h-auto md:w-[35%] lg:w-[40%] shrink-0 overflow-hidden">
                     <Image
                       src={article.imageUrl}
                       alt={article.title}
                       fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      className="object-cover transition-transform duration-700 group-hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-transparent to-transparent opacity-60" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-transparent to-transparent opacity-60 md:hidden" />
                   </div>
                 )}
                 
                 {article.media && article.media.length > 0 && (
-                  <div className="relative h-72 md:h-auto md:w-2/5 shrink-0 overflow-hidden bg-black border-r border-zinc-800/50">
+                  <div className="relative h-72 md:h-auto md:w-[35%] lg:w-[40%] shrink-0 overflow-hidden bg-black border-r border-zinc-900/50">
                     <div className="h-full flex flex-col">
                       <div className="flex-1 relative overflow-hidden group/media">
                         {article.media[0].type === 'image' ? (
@@ -231,10 +231,10 @@ const NewsFeed = () => {
                     </div>
                   </div>
                 )}
-                <div className="p-6 md:p-8 flex flex-col justify-between flex-1">
+                <div className="p-6 md:p-10 flex flex-col min-w-0 flex-1">
                   <div>
-                    <div className="flex items-center gap-3 mb-4 flex-wrap">
-                      <span className="px-3 py-1 bg-orange-600/10 text-orange-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-orange-500/20">
+                    <div className="flex items-center gap-3 mb-6 flex-wrap">
+                      <span className="px-3 py-1 bg-orange-600/10 text-orange-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-orange-500/20 shadow-sm">
                         {article.category || 'Intelligence'}
                       </span>
                       {article.itemStatus && (
@@ -251,11 +251,11 @@ const NewsFeed = () => {
                         {article.createdAt?.toDate?.() ? article.createdAt.toDate().toLocaleDateString() : 'Active Now'}
                       </span>
                     </div>
-                    <h3 className="text-2xl font-black text-white group-hover:text-orange-500 transition-colors mb-3 leading-tight tracking-tighter italic uppercase">
+                    <h3 className="text-2xl md:text-3xl font-black text-white group-hover:text-orange-500 transition-colors mb-4 leading-[1.1] tracking-tighter italic uppercase break-words pr-2">
                       {article.title}
                     </h3>
-                    <div className="relative group/content">
-                      <p className={`text-zinc-400 text-sm md:text-base leading-relaxed font-medium transition-all duration-500 ${expandedArticles.includes(article.id) ? '' : 'line-clamp-4'}`}>
+                    <div className="relative group/content overflow-hidden">
+                      <p className={`text-zinc-400 text-sm md:text-base leading-relaxed font-medium transition-all duration-500 break-words ${expandedArticles.includes(article.id) ? '' : 'line-clamp-4'}`}>
                         {article.content}
                       </p>
                       {article.content && article.content.length > 200 && (
@@ -273,9 +273,9 @@ const NewsFeed = () => {
                     </div>
                   </div>
                   
-                  <div className={`flex flex-col gap-6 ${!expandedArticles.includes(article.id) ? 'mt-auto' : 'mt-8'}`}>
-                    <div className="flex items-center justify-between pt-6 border-t border-zinc-800/80">
-                      <div className="flex items-center gap-2 md:gap-4 overflow-x-auto scrollbar-hide">
+                  <div className={`flex flex-col gap-6 ${!expandedArticles.includes(article.id) ? 'mt-auto' : 'mt-10'}`}>
+                    <div className="flex items-center justify-between pt-8 border-t border-zinc-900/80">
+                      <div className="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide no-scrollbar -ml-1">
                         {reactionTypes.map(react => (
                           <button 
                             key={react.type}

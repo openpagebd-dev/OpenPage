@@ -184,7 +184,7 @@ const DonorDirectory = () => {
                     )}
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-white leading-tight mb-1 group-hover:text-orange-500 transition-colors">
+                    <h3 className="text-lg font-black text-white leading-tight mb-1 group-hover:text-orange-500 transition-colors break-words line-clamp-2">
                       {donor.displayName || 'Tactical Donor'}
                     </h3>
                     <div className="flex items-center gap-1">

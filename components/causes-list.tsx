@@ -51,8 +51,8 @@ const CausesList = () => {
                 {cause.urgent ? 'Urgent' : 'Community'}
               </span>
             </div>
-            <h3 className="text-xl font-bold text-white mb-2">{cause.title}</h3>
-            <p className="text-zinc-400 text-sm mb-6">{cause.description}</p>
+            <h3 className="text-xl font-bold text-white mb-2 break-words line-clamp-2">{cause.title}</h3>
+            <p className="text-zinc-400 text-sm mb-6 break-words line-clamp-3">{cause.description}</p>
             
             <div className="space-y-2 mb-6">
               <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
