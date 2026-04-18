@@ -722,8 +722,8 @@ const AdminDashboard = () => {
                   type="number" 
                   placeholder="Goal Amount"
                   className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
-                  value={newCause.goal}
-                  onChange={e => setNewCause({...newCause, goal: parseInt(e.target.value)})}
+                  value={isNaN(newCause.goal) ? '' : newCause.goal}
+                  onChange={e => setNewCause({...newCause, goal: parseInt(e.target.value) || 0})}
                 />
               </div>
               <button 
@@ -851,8 +851,8 @@ const AdminDashboard = () => {
                           <input 
                             type={typeof val === 'number' ? 'number' : 'text'}
                             className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
-                            value={val}
-                            onChange={e => setEditingItem({...editingItem, data: {...editingItem.data, [key]: typeof val === 'number' ? parseInt(e.target.value) : e.target.value}})}
+                            value={isNaN(val as any) ? '' : val}
+                            onChange={e => setEditingItem({...editingItem, data: {...editingItem.data, [key]: typeof val === 'number' ? (parseInt(e.target.value) || 0) : e.target.value}})}
                           />
                         )}
                       </div>
