@@ -43,6 +43,7 @@ const AnalyticsDashboard = dynamic(() => import('@/components/analytics-dashboar
 const ArticleSubmission = dynamic(() => import('@/components/article-submission'), { ssr: false });
 const BloodRequestModal = dynamic(() => import('@/components/blood-request-modal'), { ssr: false });
 const NodeDetailModal = dynamic(() => import('@/components/node-detail-modal'), { ssr: false });
+const ProfileModal = dynamic(() => import('@/components/profile-modal'), { ssr: false });
 
 export default function Home() {
   const { user, profile, loading, isAdmin } = useFirebase();
@@ -50,7 +51,7 @@ export default function Home() {
   const [density, setDensity] = useState<'Minimal' | 'Standard' | 'Tactical'>('Tactical');
   const [briefing, setBriefing] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState<null | 'notifications' | 'settings' | 'help' | 'submit-content' | 'blood-request' | 'node-detail'>(null);
+  const [activeModal, setActiveModal] = useState<null | 'notifications' | 'settings' | 'help' | 'submit-content' | 'blood-request' | 'node-detail' | 'profile'>(null);
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Emergency O- blood needed at CMC", time: "2 min ago", unread: true },
@@ -267,6 +268,29 @@ export default function Home() {
             >
               <Settings className="w-6 h-6" />
             </button>
+
+            {user && (
+              <button 
+                onClick={() => setActiveModal('profile')}
+                className="flex items-center gap-3 p-1 pl-4 bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-orange-500/50 transition-all group"
+              >
+                <div className="flex flex-col items-end hidden md:flex">
+                  <span className="text-[10px] font-black uppercase text-white tracking-widest leading-none mb-1">
+                    {profile?.displayName || user.displayName || 'Operative'}
+                  </span>
+                  <span className="text-[8px] font-bold uppercase text-orange-500 tracking-[0.2em] leading-none">
+                    {profile?.bloodGroup || 'No Sig'}
+                  </span>
+                </div>
+                <div className="w-8 h-8 rounded-xl bg-orange-600 flex items-center justify-center overflow-hidden relative group-hover:shadow-lg group-hover:shadow-orange-600/20 transition-all">
+                  {profile?.photoURL ? (
+                    <Image src={profile.photoURL} alt="Profile" fill className="object-cover" />
+                  ) : (
+                    <User className="w-4 h-4 text-white" />
+                  )}
+                </div>
+              </button>
+            )}
           </div>
         </header>
 
@@ -403,7 +427,10 @@ export default function Home() {
                 <h2 className="text-4xl font-black uppercase tracking-tighter italic text-white mb-2">Blood Network</h2>
                 <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest leading-relaxed">Every second counts. Every drop saves lives.</p>
               </div>
-              <BloodNetwork onRequestBlood={() => setActiveModal('blood-request')} />
+              <BloodNetwork 
+                onRequestBlood={() => setActiveModal('blood-request')} 
+                userProfile={profile}
+              />
             </div>
           )}
 
@@ -602,6 +629,13 @@ export default function Home() {
               setActiveModal(null);
               setSelectedNode(null);
             }}
+          />
+        )}
+
+        {activeModal === 'profile' && profile && (
+          <ProfileModal 
+            profile={profile}
+            onClose={() => setActiveModal(null)}
           />
         )}
       </AnimatePresence>

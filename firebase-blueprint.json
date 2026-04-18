@@ -10,6 +10,9 @@
         "email": { "type": "string" },
         "photoURL": { "type": "string" },
         "role": { "type": "string", "enum": ["reader", "contributor", "admin"] },
+        "bloodGroup": { "type": "string", "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
+        "isDonor": { "type": "boolean" },
+        "location": { "type": "object" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email", "role"]

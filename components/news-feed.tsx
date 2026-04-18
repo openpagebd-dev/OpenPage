@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, where, doc, updateDoc, increment, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone } from 'lucide-react';
+import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone, Zap } from 'lucide-react';
 import Image from 'next/image';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
@@ -101,6 +101,24 @@ const NewsFeed = () => {
     }
   };
 
+  const [expandedArticles, setExpandedArticles] = useState<string[]>([]);
+
+  const toggleExpand = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedArticles(prev => 
+      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+    );
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'solved': case 'completed': return 'bg-green-500/10 text-green-500 border-green-500/20';
+      case 'pending': return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
+      case 'failed': return 'bg-red-500/10 text-red-500 border-red-500/20';
+      default: return 'bg-zinc-500/10 text-zinc-500 border-zinc-500/20';
+    }
+  };
+
   const reactionTypes = [
     { type: 'fire', icon: '🔥', color: 'hover:text-orange-500' },
     { type: 'like', icon: <ThumbsUp className="w-3.5 h-3.5" />, color: 'hover:text-blue-500' },
@@ -135,10 +153,15 @@ const NewsFeed = () => {
                 )}
                 <div className="p-6 md:p-8 flex flex-col justify-between flex-1">
                   <div>
-                    <div className="flex items-center gap-4 mb-4">
+                    <div className="flex items-center gap-3 mb-4 flex-wrap">
                       <span className="px-3 py-1 bg-orange-600/10 text-orange-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-orange-500/20">
                         {article.category || 'Intelligence'}
                       </span>
+                      {article.itemStatus && (
+                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded border ${getStatusColor(article.itemStatus)}`}>
+                          {article.itemStatus}
+                        </span>
+                      )}
                       <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center">
                         <Clock className="w-3 h-3 mr-1.5" />
                         {article.createdAt?.toDate?.() ? article.createdAt.toDate().toLocaleDateString() : 'Active Now'}
@@ -147,12 +170,26 @@ const NewsFeed = () => {
                     <h3 className="text-2xl font-black text-white group-hover:text-orange-500 transition-colors mb-3 leading-tight tracking-tighter italic uppercase">
                       {article.title}
                     </h3>
-                    <p className="text-zinc-400 text-sm md:text-base line-clamp-3 mb-6 leading-relaxed font-medium">
-                      {article.content}
-                    </p>
+                    <div className="relative group/content">
+                      <p className={`text-zinc-400 text-sm md:text-base leading-relaxed font-medium transition-all duration-500 ${expandedArticles.includes(article.id) ? '' : 'line-clamp-4'}`}>
+                        {article.content}
+                      </p>
+                      {article.content && article.content.length > 200 && (
+                        <button 
+                          onClick={(e) => toggleExpand(article.id, e)}
+                          className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 hover:text-white transition-colors mt-3 flex items-center gap-1.5 focus:outline-none"
+                        >
+                          {expandedArticles.includes(article.id) ? (
+                            <>Collapse Intel <Zap className="w-3 h-3 fill-orange-500" /></>
+                          ) : (
+                            <>Decipher Full Briefing <Eye className="w-3 h-3" /></>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                   
-                  <div className="flex flex-col gap-6">
+                  <div className={`flex flex-col gap-6 ${!expandedArticles.includes(article.id) ? 'mt-auto' : 'mt-8'}`}>
                     <div className="flex items-center justify-between pt-6 border-t border-zinc-800/80">
                       <div className="flex items-center gap-2 md:gap-4 overflow-x-auto scrollbar-hide">
                         {reactionTypes.map(react => (

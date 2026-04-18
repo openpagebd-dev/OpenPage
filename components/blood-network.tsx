@@ -8,31 +8,69 @@ import { motion, AnimatePresence } from 'motion/react';
 
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
-const BloodNetwork = ({ onRequestBlood }: { onRequestBlood: () => void }) => {
+const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => void, userProfile?: any }) => {
   const [stats, setStats] = useState({ livesSaved: 124, activeRequests: 0, donors: 450 });
   const [urgentRequests, setUrgentRequests] = useState<any[]>([]);
+  const [activeDonors, setActiveDonors] = useState<any[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
 
+  const bloodCompatibility: Record<string, string[]> = {
+    'O-': ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'],
+    'O+': ['O+', 'A+', 'B+', 'AB+'],
+    'A-': ['A-', 'A+', 'AB-', 'AB+'],
+    'A+': ['A+', 'AB+'],
+    'B-': ['B-', 'B+', 'AB-', 'AB+'],
+    'B+': ['B+', 'AB+'],
+    'AB-': ['AB-', 'AB+'],
+    'AB+': ['AB+']
+  };
+
+  const isCompatible = (donor: string, recipient: string) => {
+    return bloodCompatibility[donor]?.includes(recipient);
+  };
+
   useEffect(() => {
-    // Live stats
-    // ... same as before
+    // Live stats and Urgent Requests
     const qUrgent = query(
       collection(db, 'emergencies'),
       where('type', '==', 'blood_request'),
       where('status', '==', 'active'),
       orderBy('createdAt', 'desc'),
-      limit(5)
+      limit(10)
     );
 
-    const unsub = onSnapshot(qUrgent, (snapshot) => {
+    const unsubUrgent = onSnapshot(qUrgent, (snapshot) => {
       setUrgentRequests(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setStats(prev => ({ ...prev, activeRequests: snapshot.size }));
     }, (error) => {
       handleFirestoreError(error, OperationType.LIST, 'blood-requests');
     });
 
-    return () => unsub();
+    // Active Donors
+    const qDonors = query(
+      collection(db, 'users'),
+      where('isDonor', '==', true),
+      limit(20)
+    );
+
+    const unsubDonors = onSnapshot(qDonors, (snapshot) => {
+      setActiveDonors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setStats(prev => ({ ...prev, donors: snapshot.size + 420 })); // Add offset for demo
+    });
+
+    return () => {
+      unsubUrgent();
+      unsubDonors();
+    };
   }, []);
+
+  const matchedRequests = urgentRequests.filter(req => 
+    userProfile?.bloodGroup && isCompatible(userProfile.bloodGroup, req.bloodGroup)
+  );
+
+  const matchedDonors = activeDonors.filter(donor =>
+    userProfile?.bloodGroup && donor.bloodGroup && isCompatible(donor.bloodGroup, userProfile.bloodGroup)
+  );
 
   return (
     <div className="space-y-6 relative">
@@ -69,6 +107,77 @@ const BloodNetwork = ({ onRequestBlood }: { onRequestBlood: () => void }) => {
           </div>
         ))}
       </div>
+
+      {userProfile?.bloodGroup && (
+        <div className="space-y-4">
+          <div className="p-4 bg-orange-600 rounded-3xl overflow-hidden relative group">
+            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70 mb-1">Biological Sync Active</div>
+                <div className="text-lg font-black uppercase text-white tracking-tighter italic">Matched {userProfile.isDonor ? 'Requests' : 'Donors'} for {userProfile.bloodGroup}</div>
+              </div>
+              <ShieldCheck className="w-8 h-8 text-white/20" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            {userProfile.isDonor ? (
+              matchedRequests.length > 0 ? matchedRequests.map(req => (
+                <motion.div
+                  key={req.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex items-center justify-between hover:border-red-600/50 transition-all cursor-pointer"
+                  onClick={() => setSelectedRequest(req)}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-red-600/20 rounded-xl flex items-center justify-center text-red-500 font-black">
+                      {req.bloodGroup}
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white">{req.hospital}</div>
+                      <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">Urgent Requirement</div>
+                    </div>
+                  </div>
+                  <Plus className="w-4 h-4 text-zinc-600" />
+                </motion.div>
+              )) : (
+                <div className="p-6 text-center bg-zinc-900/50 rounded-2xl border border-zinc-800 text-zinc-500 text-xs">
+                  No active requests matching your profile.
+                </div>
+              )
+            ) : (
+              matchedDonors.length > 0 ? matchedDonors.map(donor => (
+                <motion.div
+                  key={donor.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl flex items-center justify-between hover:border-orange-500/50 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-orange-600/20 rounded-xl flex items-center justify-center text-orange-500 font-black relative">
+                      {donor.bloodGroup}
+                    </div>
+                    <div>
+                      <div className="text-sm font-bold text-white">{donor.displayName || 'Anonymous Donor'}</div>
+                      <div className="text-[10px] text-zinc-500 uppercase font-black tracking-widest">Verified Tactical Donor</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    <span className="text-[9px] font-black uppercase text-zinc-600">Active</span>
+                  </div>
+                </motion.div>
+              )) : (
+                <div className="p-6 text-center bg-zinc-900/50 rounded-2xl border border-zinc-800 text-zinc-500 text-xs">
+                  Awaiting profile synchronization. Update settings to see matches.
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-3">
         <h3 className="text-sm font-bold text-white flex items-center">

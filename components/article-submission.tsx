@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, Image as ImageIcon, Type, Layout, Tag, AlertCircle } from 'lucide-react';
+import { X, Send, Image as ImageIcon, Type, Layout, Tag, AlertCircle, ShieldCheck as ShieldCircle } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
 interface ArticleSubmissionProps {
@@ -19,7 +19,10 @@ const ArticleSubmission = ({ onClose, onSuccess }: ArticleSubmissionProps) => {
     content: '',
     category: 'Intelligence',
     imageUrl: '',
+    itemStatus: 'Pending',
   });
+
+  const statuses = ['Pending', 'Solved', 'Failed'];
 
   const categories = [
     'Intelligence',
@@ -101,20 +104,35 @@ const ArticleSubmission = ({ onClose, onSuccess }: ArticleSubmissionProps) => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="group">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Classification</label>
-                  <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 focus-within:border-orange-500/50 transition-all">
-                    <Tag className="w-4 h-4 text-zinc-600 mr-3" />
-                    <select 
-                      className="bg-transparent border-none outline-none text-xs w-full text-white appearance-none cursor-pointer font-bold"
-                      value={formData.category}
-                      onChange={e => setFormData({ ...formData, category: e.target.value })}
-                    >
-                      {categories.map(c => <option key={c} value={c} className="bg-zinc-950">{c}</option>)}
-                    </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="group">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Classification</label>
+                    <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 focus-within:border-orange-500/50 transition-all">
+                      <Tag className="w-4 h-4 text-zinc-600 mr-3" />
+                      <select 
+                        className="bg-transparent border-none outline-none text-xs w-full text-white appearance-none cursor-pointer font-bold"
+                        value={formData.category}
+                        onChange={e => setFormData({ ...formData, category: e.target.value })}
+                      >
+                        {categories.map(c => <option key={c} value={c} className="bg-zinc-950">{c}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                  <div className="group">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Operational Status</label>
+                    <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 focus-within:border-orange-500/50 transition-all">
+                      <ShieldCircle className="w-4 h-4 text-zinc-600 mr-3" />
+                      <select 
+                        className="bg-transparent border-none outline-none text-xs w-full text-white appearance-none cursor-pointer font-bold"
+                        value={formData.itemStatus}
+                        onChange={e => setFormData({ ...formData, itemStatus: e.target.value })}
+                      >
+                        {statuses.map(s => <option key={s} value={s} className="bg-zinc-950">{s}</option>)}
+                      </select>
+                    </div>
                   </div>
                 </div>
+
                 <div className="group">
                   <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Visual Asset URL</label>
                   <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 focus-within:border-orange-500/50 transition-all">
@@ -128,7 +146,6 @@ const ArticleSubmission = ({ onClose, onSuccess }: ArticleSubmissionProps) => {
                     />
                   </div>
                 </div>
-              </div>
 
               <div className="group">
                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Intelligence Data</label>
