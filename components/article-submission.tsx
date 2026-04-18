@@ -10,16 +10,18 @@ import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 interface ArticleSubmissionProps {
   onClose: () => void;
   onSuccess: () => void;
+  initialCategory?: string;
+  initialStatus?: string;
 }
 
-const ArticleSubmission = ({ onClose, onSuccess }: ArticleSubmissionProps) => {
+const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus }: ArticleSubmissionProps) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
-    category: 'Intelligence',
+    category: initialCategory || 'Intelligence',
     imageUrl: '',
-    itemStatus: 'Pending',
+    itemStatus: initialStatus || 'Pending',
   });
 
   const statuses = ['Pending', 'Solved', 'Failed'];
@@ -28,6 +30,7 @@ const ArticleSubmission = ({ onClose, onSuccess }: ArticleSubmissionProps) => {
     'Intelligence',
     'Emergency',
     'Infrastructure',
+    'Public Safety',
     'Civic Pulse',
     'Editorial',
     'Community'

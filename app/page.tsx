@@ -52,6 +52,7 @@ export default function Home() {
   const [briefing, setBriefing] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<null | 'notifications' | 'settings' | 'help' | 'submit-content' | 'blood-request' | 'node-detail' | 'profile'>(null);
+  const [submissionConfig, setSubmissionConfig] = useState<{ category?: string, status?: string }>({});
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
   const [notifications, setNotifications] = useState([
     { id: 1, text: "Emergency O- blood needed at CMC", time: "2 min ago", unread: true },
@@ -561,14 +562,14 @@ export default function Home() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { label: 'Medical Emergency', icon: '🚑', color: 'bg-red-600/10 border-red-500/20 text-red-500' },
-                    { label: 'Blood Request', icon: '💉', color: 'bg-red-600/10 border-red-500/20 text-red-500' },
-                    { label: 'Infrastructure', icon: '⚡', color: 'bg-orange-600/10 border-orange-500/20 text-orange-500' },
-                    { label: 'Public Safety', icon: '🛡️', color: 'bg-blue-600/10 border-blue-500/20 text-blue-500' },
+                    { label: 'Medical Emergency', icon: '🚑', color: 'bg-red-600/10 border-red-500/20 text-red-500', action: () => { setSubmissionConfig({ category: 'Emergency', status: 'Pending' }); setActiveModal('submit-content'); } },
+                    { label: 'Blood Request', icon: '💉', color: 'bg-red-600/10 border-red-500/20 text-red-500', action: () => setActiveModal('blood-request') },
+                    { label: 'Infrastructure', icon: '⚡', color: 'bg-orange-600/10 border-orange-500/20 text-orange-500', action: () => { setSubmissionConfig({ category: 'Infrastructure', status: 'Pending' }); setActiveModal('submit-content'); } },
+                    { label: 'Public Safety', icon: '🛡️', color: 'bg-blue-600/10 border-blue-500/20 text-blue-500', action: () => { setSubmissionConfig({ category: 'Public Safety', status: 'Pending' }); setActiveModal('submit-content'); } },
                   ].map(type => (
                     <button 
                       key={type.label}
-                      onClick={() => { alert('Emergency Broadcast Initiated!'); setActiveModal(null); }}
+                      onClick={type.action}
                       className={`p-6 rounded-3xl border transition-all hover:scale-105 active:scale-95 ${type.color} group`}
                     >
                       <div className="text-3xl mb-3 group-hover:scale-125 transition-transform">{type.icon}</div>
@@ -590,7 +591,12 @@ export default function Home() {
 
         {activeModal === 'submit-content' && (
           <ArticleSubmission 
-            onClose={() => setActiveModal(null)}
+            initialCategory={submissionConfig.category}
+            initialStatus={submissionConfig.status}
+            onClose={() => {
+              setActiveModal(null);
+              setSubmissionConfig({});
+            }}
             onSuccess={() => {
               setNotifications(prev => [
                 { 

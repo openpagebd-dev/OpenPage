@@ -8,7 +8,10 @@ import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Hea
 import Image from 'next/image';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
+import { useFirebase } from './firebase-provider';
+
 const NewsFeed = () => {
+  const { profile, isAdmin } = useFirebase();
   const [articles, setArticles] = useState<any[]>([]);
   const [ads, setAds] = useState<any[]>([]);
   const [adsEnabled, setAdsEnabled] = useState(true);
@@ -101,6 +104,25 @@ const NewsFeed = () => {
     }
   };
 
+  const updateStatus = async (articleId: string, currentStatus: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isAdmin && articles.find(a => a.id === articleId)?.authorId !== auth.currentUser?.uid) return;
+
+    const nextStatusMap: Record<string, string> = {
+      'Pending': 'Solved',
+      'Solved': 'Failed',
+      'Failed': 'Pending'
+    };
+    const nextStatus = nextStatusMap[currentStatus] || 'Pending';
+
+    try {
+      const docRef = doc(db, 'articles', articleId);
+      await updateDoc(docRef, { itemStatus: nextStatus });
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `articles/${articleId}`);
+    }
+  };
+
   const [expandedArticles, setExpandedArticles] = useState<string[]>([]);
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
@@ -158,9 +180,13 @@ const NewsFeed = () => {
                         {article.category || 'Intelligence'}
                       </span>
                       {article.itemStatus && (
-                        <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded border ${getStatusColor(article.itemStatus)}`}>
+                        <button 
+                          onClick={(e) => updateStatus(article.id, article.itemStatus, e)}
+                          disabled={!isAdmin && article.authorId !== auth.currentUser?.uid}
+                          className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded border transition-all ${getStatusColor(article.itemStatus)} ${isAdmin || article.authorId === auth.currentUser?.uid ? 'hover:scale-105 active:scale-95 cursor-pointer' : 'cursor-default'}`}
+                        >
                           {article.itemStatus}
-                        </span>
+                        </button>
                       )}
                       <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center">
                         <Clock className="w-3 h-3 mr-1.5" />

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { motion } from 'motion/react';
-import { X, User, Mail, Shield, Droplets, MapPin, Save, LogOut } from 'lucide-react';
+import { X, User, Mail, Shield, Droplets, MapPin, Save, LogOut, Heart } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 import { signOut } from 'firebase/auth';
 
@@ -148,5 +148,3 @@ const ProfileModal = ({ profile, onClose }: ProfileModalProps) => {
 };
 
 export default ProfileModal;
-
-import { Heart } from 'lucide-react';
