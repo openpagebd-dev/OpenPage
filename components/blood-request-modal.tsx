@@ -71,9 +71,9 @@ const BloodRequestModal = ({ onClose, onSuccess }: BloodRequestModalProps) => {
       <motion.div 
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl"
+        className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
       >
-        <div className="p-6 border-b border-zinc-800 flex items-center justify-between bg-red-600/10">
+        <div className="p-5 md:p-6 border-b border-zinc-800 flex items-center justify-between bg-red-600/10 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
               <Droplets className="text-white w-6 h-6" />
@@ -97,30 +97,31 @@ const BloodRequestModal = ({ onClose, onSuccess }: BloodRequestModalProps) => {
             <p className="text-zinc-500 text-sm">Your emergency node has been activeated on the Live Map.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Patient Name</label>
-                <input 
-                  required
-                  type="text"
-                  value={formData.patientName}
-                  onChange={e => setFormData(prev => ({ ...prev, patientName: e.target.value }))}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-red-600 transition-colors outline-none"
-                  placeholder="e.g. John Doe"
-                />
+          <div className="overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Patient Name</label>
+                  <input 
+                    required
+                    type="text"
+                    value={formData.patientName}
+                    onChange={e => setFormData(prev => ({ ...prev, patientName: e.target.value }))}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-red-600 transition-colors outline-none"
+                    placeholder="e.g. John Doe"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Blood Group</label>
+                  <select 
+                    value={formData.bloodGroup}
+                    onChange={e => setFormData(prev => ({ ...prev, bloodGroup: e.target.value }))}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-red-600 transition-colors outline-none appearance-none cursor-pointer"
+                  >
+                    {bloodGroups.map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                  </select>
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Blood Group</label>
-                <select 
-                  value={formData.bloodGroup}
-                  onChange={e => setFormData(prev => ({ ...prev, bloodGroup: e.target.value }))}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-sm focus:border-red-600 transition-colors outline-none appearance-none cursor-pointer"
-                >
-                  {bloodGroups.map(bg => <option key={bg} value={bg}>{bg}</option>)}
-                </select>
-              </div>
-            </div>
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 ml-1">Hospital / Location</label>
@@ -177,7 +178,8 @@ const BloodRequestModal = ({ onClose, onSuccess }: BloodRequestModalProps) => {
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Activate Emergency Node'}
             </button>
           </form>
-        )}
+        </div>
+      )}
       </motion.div>
     </motion.div>
   );

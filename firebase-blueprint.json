@@ -28,6 +28,17 @@
         "authorId": { "type": "string" },
         "authorName": { "type": "string" },
         "imageUrl": { "type": "string" },
+        "media": { 
+          "type": "array", 
+          "items": { 
+            "type": "object",
+            "properties": {
+              "url": { "type": "string" },
+              "type": { "type": "string", "enum": ["image", "video", "file"] },
+              "name": { "type": "string" }
+            }
+          } 
+        },
         "views": { "type": "number" },
         "reactions": { "type": "object" },
         "location": { "type": "object" },

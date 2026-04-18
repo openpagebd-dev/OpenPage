@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, where, doc, updateDoc, increment, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone, Zap } from 'lucide-react';
+import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone, Zap, Film, FileText, Download, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
@@ -161,7 +161,7 @@ const NewsFeed = () => {
               className="group relative bg-[#0a0a0b] border border-zinc-800/60 rounded-[2rem] overflow-hidden hover:border-orange-500/30 transition-all duration-500"
             >
               <div className="md:flex">
-                {article.imageUrl && (
+                {article.imageUrl && !article.media?.length && (
                   <div className="relative h-56 md:h-auto md:w-2/5 shrink-0 overflow-hidden">
                     <Image
                       src={article.imageUrl}
@@ -171,6 +171,64 @@ const NewsFeed = () => {
                       referrerPolicy="no-referrer"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0b] via-transparent to-transparent opacity-60" />
+                  </div>
+                )}
+                
+                {article.media && article.media.length > 0 && (
+                  <div className="relative h-72 md:h-auto md:w-2/5 shrink-0 overflow-hidden bg-black border-r border-zinc-800/50">
+                    <div className="h-full flex flex-col">
+                      <div className="flex-1 relative overflow-hidden group/media">
+                        {article.media[0].type === 'image' ? (
+                          <Image
+                            src={article.media[0].url}
+                            alt={article.media[0].name}
+                            fill
+                            className="object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                        ) : article.media[0].type === 'video' ? (
+                          <video 
+                            src={article.media[0].url} 
+                            controls 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-zinc-900/50">
+                            <FileText className="w-16 h-16 text-zinc-700 mb-4" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-2 truncate max-w-full">{article.media[0].name}</p>
+                            <a 
+                              href={article.media[0].url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="px-4 py-2 bg-orange-600 rounded-xl text-[10px] font-black uppercase text-white hover:bg-orange-500 transition-all flex items-center gap-2"
+                            >
+                              <Download className="w-3 h-3" /> Download Artifact
+                            </a>
+                          </div>
+                        )}
+                        {article.media.length > 1 && (
+                          <div className="absolute bottom-4 right-4 px-3 py-1.5 bg-black/80 backdrop-blur-md rounded-full border border-zinc-700 text-[10px] font-black uppercase tracking-widest text-white shadow-2xl">
+                            +{article.media.length - 1} Operational Files
+                          </div>
+                        )}
+                      </div>
+                      
+                      {article.media.length > 1 && (
+                        <div className="h-20 bg-zinc-950 border-t border-zinc-900 flex gap-2 p-2 overflow-x-auto scrollbar-hide">
+                          {article.media.slice(1, 5).map((m: any, i: number) => (
+                            <div key={i} className="h-full aspect-square relative rounded-lg overflow-hidden border border-zinc-800 shrink-0">
+                              {m.type === 'image' ? (
+                                <Image src={m.url} alt={m.name} fill className="object-cover opacity-50 hover:opacity-100 transition-opacity" referrerPolicy="no-referrer" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                                  {m.type === 'video' ? <Film className="w-4 h-4 text-zinc-700" /> : <FileText className="w-4 h-4 text-zinc-700" />}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="p-6 md:p-8 flex flex-col justify-between flex-1">

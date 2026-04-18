@@ -102,27 +102,40 @@ export default function Home() {
 
   const densityClasses = {
     Minimal: "p-0",
-    Standard: "p-4 md:p-6",
-    Tactical: "p-6 md:p-10"
+    Standard: "px-4 py-6 md:p-6",
+    Tactical: "px-4 py-8 md:p-10"
   };
 
   return (
     <div className={`flex h-screen bg-zinc-950 text-white overflow-hidden ${density === 'Minimal' ? 'text-xs' : ''}`}>
+      {/* Mobile Backdrop */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[1500] lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar Navigation */}
       <aside className={`fixed lg:relative z-[2000] flex flex-col w-72 h-full bg-zinc-950 border-r border-zinc-900 transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-6 flex items-center justify-between">
+        <div className="p-6 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20">
               <Zap className="text-white w-6 h-6 fill-white" />
             </div>
-            <span className="text-xl font-black uppercase tracking-tight">OpenPage</span>
+            <span className="text-xl font-black uppercase tracking-tight text-white">OpenPage</span>
           </div>
-          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-zinc-500">
-            <Menu className="w-6 h-6" />
+          <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 hover:bg-zinc-900 rounded-xl transition-colors">
+            <X className="w-5 h-5 text-zinc-500" />
           </button>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1">
+        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-hide">
           {[
             { id: 'map', label: 'Live Map', icon: MapIcon },
             { id: 'news', label: 'News Feed', icon: Newspaper },
@@ -190,28 +203,28 @@ export default function Home() {
         {/* Header */}
         <header className="h-20 border-b border-zinc-900 flex items-center justify-between px-6 bg-zinc-950/50 backdrop-blur-xl z-[1000]">
           <div className="flex items-center gap-4 lg:hidden">
-            <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-zinc-900 rounded-xl">
-              <Menu className="w-6 h-6 text-zinc-400" />
+            <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-zinc-900 rounded-xl active:scale-95 transition-transform">
+              <Menu className="w-5 h-5 text-zinc-400" />
             </button>
-            <span className="font-black text-lg uppercase">OpenPage</span>
+            <span className="font-black text-base uppercase tracking-tight">OpenPage</span>
           </div>
 
-          <div className="hidden lg:flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-2 w-96 group focus-within:border-orange-500/50 transition-all">
+          <div className="hidden lg:flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-2 w-72 xl:w-96 group focus-within:border-orange-500/50 transition-all">
             <Search className="w-4 h-4 text-zinc-500 mr-3" />
             <input 
               type="text" 
-              placeholder="Search news, locations, or blood info..." 
+              placeholder="Search news, locations..." 
               className="bg-transparent border-none outline-none text-xs w-full text-zinc-100 placeholder:text-zinc-600"
             />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="relative">
               <button 
                 onClick={() => setActiveModal(activeModal === 'notifications' ? null : 'notifications')}
-                className="relative p-2 bg-zinc-900 rounded-xl text-zinc-400 hover:text-white transition-colors"
+                className="relative p-2 bg-zinc-900 rounded-xl text-zinc-400 hover:text-white transition-colors active:scale-95"
               >
-                <Bell className="w-6 h-6" />
+                <Bell className="w-5 h-5 md:w-6 md:h-6" />
                 {notifications.some(n => n.unread) && (
                   <span className="absolute top-2 right-2 w-2 h-2 bg-orange-600 rounded-full border border-zinc-900 animate-pulse"></span>
                 )}
@@ -268,15 +281,15 @@ export default function Home() {
 
             <button 
               onClick={() => setActiveModal('settings')}
-              className="p-2 bg-zinc-900 rounded-xl text-zinc-400 hover:text-white transition-colors"
+              className="p-2 bg-zinc-900 rounded-xl text-zinc-400 hover:text-white transition-colors active:scale-95"
             >
-              <Settings className="w-6 h-6" />
+              <Settings className="w-5 h-5 md:w-6 md:h-6" />
             </button>
 
             {user && (
               <button 
                 onClick={() => setActiveModal('profile')}
-                className="flex items-center gap-3 p-1 pl-4 bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-orange-500/50 transition-all group"
+                className="flex items-center gap-2 md:gap-3 p-1 pl-2 md:pl-4 bg-zinc-900 border border-zinc-800 rounded-2xl hover:border-orange-500/50 transition-all group active:scale-95"
               >
                 <div className="flex flex-col items-end hidden md:flex">
                   <span className="text-[10px] font-black uppercase text-white tracking-widest leading-none mb-1">
@@ -286,7 +299,7 @@ export default function Home() {
                     {profile?.bloodGroup || 'No Sig'}
                   </span>
                 </div>
-                <div className="w-8 h-8 rounded-xl bg-orange-600 flex items-center justify-center overflow-hidden relative group-hover:shadow-lg group-hover:shadow-orange-600/20 transition-all">
+                <div className="w-7 h-7 md:w-8 md:h-8 rounded-xl bg-orange-600 flex items-center justify-center overflow-hidden relative group-hover:shadow-lg group-hover:shadow-orange-600/20 transition-all">
                   {profile?.photoURL ? (
                     <Image src={profile.photoURL} alt="Profile" fill className="object-cover" />
                   ) : (
@@ -443,12 +456,12 @@ export default function Home() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Heart className="w-5 h-5 text-red-500 fill-red-500/20" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500">Humanity Direct</span>
+                    <Heart className="w-4 h-4 md:w-5 md:h-5 text-red-500 fill-red-500/20" />
+                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-red-500">Humanity Direct</span>
                   </div>
-                  <h2 className="text-5xl font-black uppercase tracking-tighter italic text-white">Critical Causes</h2>
+                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter italic text-white leading-tight">Critical Causes</h2>
                 </div>
-                <p className="text-zinc-500 text-xs md:text-sm font-medium max-w-sm border-l-2 border-zinc-800 pl-6 leading-relaxed">
+                <p className="text-zinc-500 text-xs md:text-sm font-medium max-w-sm md:border-l-2 border-zinc-800 md:pl-6 leading-relaxed mt-2 md:mt-0">
                   Support verified local humanitarian efforts through the OpenPage Direct Support Network.
                 </p>
               </div>
@@ -461,12 +474,12 @@ export default function Home() {
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Users className="w-5 h-5 text-orange-500 fill-orange-500/20" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">Global Network</span>
+                    <Users className="w-4 h-4 md:w-5 md:h-5 text-orange-500 fill-orange-500/20" />
+                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">Global Network</span>
                   </div>
-                  <h2 className="text-5xl font-black uppercase tracking-tighter italic text-white text-wrap md:text-nowrap">Donor Directory</h2>
+                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter italic text-white leading-tight">Donor Directory</h2>
                 </div>
-                <p className="text-zinc-500 text-xs md:text-sm font-medium max-w-sm border-l-2 border-zinc-800 pl-6 leading-relaxed">
+                <p className="text-zinc-500 text-xs md:text-sm font-medium max-w-sm md:border-l-2 border-zinc-800 md:pl-6 leading-relaxed mt-2 md:mt-0">
                   Search and connect with the Vanguard tactical donor network. Direct verified synchronization for emergency response.
                 </p>
               </div>

@@ -1,11 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-import { db, auth } from '@/lib/firebase';
+import { db, auth, storage } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, Image as ImageIcon, Type, Layout, Tag, AlertCircle, ShieldCheck as ShieldCircle } from 'lucide-react';
+import { X, Send, Image as ImageIcon, Type, Layout, Tag, AlertCircle, ShieldCheck as ShieldCircle, Upload, Film, FileText, Trash2, Plus } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
+
+interface Attachment {
+  file: File;
+  preview: string;
+  type: 'image' | 'video' | 'file';
+}
 
 interface ArticleSubmissionProps {
   onClose: () => void;
@@ -16,6 +23,8 @@ interface ArticleSubmissionProps {
 
 const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus }: ArticleSubmissionProps) => {
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -36,14 +45,58 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
     'Community'
   ];
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    processFiles(files);
+  };
+
+  const processFiles = (files: File[]) => {
+    const newAttachments = files.map(file => {
+      let type: 'image' | 'video' | 'file' = 'file';
+      if (file.type.startsWith('image/')) type = 'image';
+      else if (file.type.startsWith('video/')) type = 'video';
+      
+      return {
+        file,
+        type,
+        preview: URL.createObjectURL(file)
+      };
+    });
+    setAttachments(prev => [...prev, ...newAttachments]);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => {
+      const next = [...prev];
+      URL.revokeObjectURL(next[index].preview);
+      next.splice(index, 1);
+      return next;
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!auth.currentUser) return;
     
     setLoading(true);
     try {
+      const uploadedMedia = [];
+      
+      // Upload attachments first
+      for (const attachment of attachments) {
+        const fileRef = ref(storage, `articles/${Date.now()}_${attachment.file.name}`);
+        const snapshot = await uploadBytes(fileRef, attachment.file);
+        const url = await getDownloadURL(snapshot.ref);
+        uploadedMedia.push({
+          url,
+          type: attachment.type,
+          name: attachment.file.name
+        });
+      }
+
       await addDoc(collection(db, 'articles'), {
         ...formData,
+        media: uploadedMedia,
         authorId: auth.currentUser.uid,
         authorName: auth.currentUser.displayName || 'Vanguard Node',
         status: 'pending', // Requires admin approval
@@ -72,9 +125,9 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-zinc-950 border border-zinc-800 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl relative"
+        className="bg-zinc-950 border border-zinc-800 w-full max-w-2xl rounded-[2.5rem] overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col"
       >
-        <div className="p-8">
+        <div className="p-6 md:p-8 overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20">
@@ -150,20 +203,88 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
                   </div>
                 </div>
 
-              <div className="group">
-                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Intelligence Data</label>
-                <div className="flex items-start bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-4 focus-within:border-orange-500/50 transition-all min-h-[200px]">
-                  <Layout className="w-4 h-4 text-zinc-600 mr-3 mt-1" />
-                  <textarea 
-                    required
-                    placeholder="Provide the core content and intelligence details..." 
-                    className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-zinc-700 resize-none h-full min-h-[160px] leading-relaxed"
-                    value={formData.content}
-                    onChange={e => setFormData({ ...formData, content: e.target.value })}
-                  />
+                <div className="group">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Intelligence Data</label>
+                  <div className="flex items-start bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-4 focus-within:border-orange-500/50 transition-all min-h-[200px]">
+                    <Layout className="w-4 h-4 text-zinc-600 mr-3 mt-1" />
+                    <textarea 
+                      required
+                      placeholder="Provide the core content and intelligence details..." 
+                      className="bg-transparent border-none outline-none text-sm w-full text-white placeholder:text-zinc-700 resize-none h-full min-h-[160px] leading-relaxed"
+                      value={formData.content}
+                      onChange={e => setFormData({ ...formData, content: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                {/* Media Upload Zone */}
+                <div className="group">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Tactical Media Attachments (Photos, Videos, Files)</label>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <AnimatePresence>
+                        {attachments.map((att, idx) => (
+                          <motion.div 
+                            key={idx}
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="relative aspect-square bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden group/item"
+                          >
+                            {att.type === 'image' ? (
+                              <img src={att.preview} alt="Preview" className="w-full h-full object-cover" />
+                            ) : att.type === 'video' ? (
+                              <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                                <Film className="w-8 h-8 text-orange-500" />
+                              </div>
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-zinc-800">
+                                <FileText className="w-8 h-8 text-zinc-500" />
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/item:opacity-100 transition-opacity flex items-center justify-center">
+                              <button 
+                                type="button"
+                                onClick={() => removeAttachment(idx)}
+                                className="p-2 bg-red-600 rounded-full text-white hover:bg-red-500 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                              <p className="text-[8px] text-white truncate font-black uppercase tracking-tighter">{att.file.name}</p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </AnimatePresence>
+                      
+                      <label className="aspect-square bg-zinc-900/50 border-2 border-dashed border-zinc-800 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:border-orange-500/50 hover:bg-orange-500/5 transition-all group/add">
+                        <Plus className="w-6 h-6 text-zinc-600 group-hover/add:text-orange-500 transition-colors" />
+                        <span className="text-[8px] font-black uppercase tracking-widest text-zinc-600 mt-2 group-hover/add:text-orange-500 transition-colors">Add Media</span>
+                        <input 
+                          type="file" 
+                          multiple 
+                          accept="image/*,video/*,.pdf,.doc,.docx" 
+                          className="hidden" 
+                          onChange={handleFileChange}
+                        />
+                      </label>
+                    </div>
+
+                    <div 
+                      onDragOver={e => e.preventDefault()}
+                      onDrop={e => {
+                        e.preventDefault();
+                        processFiles(Array.from(e.dataTransfer.files));
+                      }}
+                      className="py-8 border-2 border-dashed border-zinc-900 rounded-3xl flex flex-col items-center justify-center bg-zinc-950 hover:border-orange-500/30 transition-all text-zinc-600 hover:text-orange-500"
+                    >
+                      <Upload className="w-10 h-10 mb-2 opacity-20" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em]">Deployment Zone: Drop Files Here</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
 
             <div className="flex items-center gap-4 p-4 bg-orange-600/5 border border-orange-500/20 rounded-2xl">
               <AlertCircle className="w-5 h-5 text-orange-500 shrink-0" />

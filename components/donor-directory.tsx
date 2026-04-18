@@ -92,7 +92,7 @@ const DonorDirectory = () => {
   return (
     <div className="space-y-8">
       {/* Search and Filter Header */}
-      <div className="flex flex-col md:flex-row gap-4">
+      <div className="flex flex-col xl:flex-row gap-4">
         <div className="flex-1 relative group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-orange-500 transition-colors" />
           <input
@@ -103,9 +103,9 @@ const DonorDirectory = () => {
             className="w-full bg-zinc-900 border border-zinc-800 focus:border-orange-500/50 rounded-2xl py-4 pl-12 pr-4 text-sm text-white placeholder:text-zinc-600 outline-none transition-all"
           />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
           {/* Blood Group Quick Filter scrollable on mobile */}
-          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 scrollbar-hide no-scrollbar">
+          <div className="flex gap-2 shrink-0">
             {bloodGroups.slice(0, 5).map(bg => (
               <button
                 key={bg}
@@ -117,10 +117,10 @@ const DonorDirectory = () => {
             ))}
             <button 
               onClick={() => setIsFilterOpen(!isFilterOpen)}
-              className={`px-4 py-2 rounded-xl border transition-all flex items-center gap-2 ${isFilterOpen ? 'bg-zinc-800 border-orange-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}
+              className={`px-4 py-2 rounded-xl border transition-all flex items-center gap-2 shrink-0 ${isFilterOpen ? 'bg-zinc-800 border-orange-500 text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}
             >
               <Filter className="w-3 h-3" />
-              <span className="text-[10px] font-black uppercase tracking-widest">More</span>
+              <span className="text-[10px] font-black uppercase tracking-widest">More Filters</span>
             </button>
           </div>
         </div>
@@ -134,7 +134,7 @@ const DonorDirectory = () => {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="grid grid-cols-4 md:grid-cols-9 gap-2 p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800">
+            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-9 gap-2 p-4 bg-zinc-900/50 rounded-2xl border border-zinc-800">
               {bloodGroups.map(bg => (
                 <button
                   key={bg}

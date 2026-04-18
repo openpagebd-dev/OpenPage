@@ -94,16 +94,16 @@ const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => v
       </button>
 
       {/* Stats Board */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 md:gap-3">
         {[
-          { label: 'Lives Saved', value: stats.livesSaved, icon: Heart, color: 'text-red-500' },
+          { label: 'Saved', value: stats.livesSaved, icon: Heart, color: 'text-red-500' },
           { label: 'Active', value: stats.activeRequests, icon: Droplets, color: 'text-red-600' },
           { label: 'Donors', value: stats.donors, icon: Users, color: 'text-zinc-400' },
         ].map((stat, i) => (
-          <div key={i} className="bg-zinc-900 border border-zinc-800 p-4 rounded-2xl text-center">
-            <stat.icon className={`w-5 h-5 mx-auto mb-2 ${stat.color}`} />
-            <div className="text-xl font-bold text-white">{stat.value}</div>
-            <div className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold">{stat.label}</div>
+          <div key={i} className="bg-zinc-900 border border-zinc-800 p-3 md:p-4 rounded-2xl text-center">
+            <stat.icon className={`w-4 h-4 md:w-5 md:h-5 mx-auto mb-1.5 md:mb-2 ${stat.color}`} />
+            <div className="text-lg md:text-xl font-bold text-white">{stat.value}</div>
+            <div className="text-[8px] md:text-[10px] uppercase tracking-wider text-zinc-500 font-bold leading-none">{stat.label}</div>
           </div>
         ))}
       </div>

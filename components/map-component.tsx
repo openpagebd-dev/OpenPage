@@ -194,29 +194,31 @@ const MapComponent = ({ onViewDetails }: MapComponentProps) => {
       </MapContainer>
 
       {/* Map Legend/Overlay */}
-      <div className="absolute bottom-6 left-6 z-[1000] bg-zinc-950/90 backdrop-blur-xl border border-zinc-800 p-5 rounded-3xl shadow-2xl min-w-[200px]">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-1.5 h-4 bg-orange-600 rounded-full" />
-          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Node Intelligence</h4>
+      <div className="absolute bottom-4 left-4 right-4 md:right-auto md:bottom-6 md:left-6 z-[1000] bg-zinc-950/90 backdrop-blur-xl border border-zinc-800 p-4 md:p-5 rounded-3xl shadow-2xl md:min-w-[200px]">
+        <div className="flex items-center justify-between md:mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-4 bg-orange-600 rounded-full" />
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Node Intel</h4>
+          </div>
         </div>
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
+        <div className="flex md:flex-col gap-3 md:gap-3 overflow-x-auto no-scrollbar md:overflow-visible py-2 md:py-0">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="w-6 h-6 bg-red-600 rounded-lg flex items-center justify-center emergency-pulse border border-white/20">
               <AlertCircle className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white">Emergency Pulse</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white">Emergency</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="w-6 h-6 bg-red-500 rounded-lg flex items-center justify-center border border-white/20">
               <Droplets className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white">Blood Network</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white">Blood</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center border border-white/20">
               <MapPin className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white">Verified Intel</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-white">Intel</span>
           </div>
         </div>
       </div>
