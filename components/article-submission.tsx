@@ -5,6 +5,7 @@ import { db, auth, storage } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion, AnimatePresence } from 'motion/react';
+import Image from 'next/image';
 import { X, Send, Image as ImageIcon, Type, Layout, Tag, AlertCircle, ShieldCheck as ShieldCircle, Upload, Film, FileText, Trash2, Plus } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
@@ -232,7 +233,7 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
                             className="relative aspect-square bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden group/item"
                           >
                             {att.type === 'image' ? (
-                              <img src={att.preview} alt="Preview" className="w-full h-full object-cover" />
+                              <Image src={att.preview} alt="Preview" fill className="object-cover" unoptimized />
                             ) : att.type === 'video' ? (
                               <div className="w-full h-full flex items-center justify-center bg-zinc-800">
                                 <Film className="w-8 h-8 text-orange-500" />

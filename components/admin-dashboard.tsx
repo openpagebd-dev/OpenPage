@@ -15,6 +15,7 @@ import {
   FileText,
   Save
 } from 'lucide-react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'motion/react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
@@ -24,6 +25,8 @@ const AdminDashboard = () => {
   const [ads, setAds] = useState<any[]>([]);
   const [articles, setArticles] = useState<any[]>([]);
   const [polls, setPolls] = useState<any[]>([]);
+  const [emergencies, setEmergencies] = useState<any[]>([]);
+  const [causes, setCauses] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [isResetting, setIsResetting] = useState(false);
   const [newAd, setNewAd] = useState({ title: '', type: 'image', content: '', placement: 'home_banner', active: true, url: '', imageUrl: '' });
@@ -51,6 +54,16 @@ const AdminDashboard = () => {
       setPolls(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    // Emergencies Listener
+    const unsubEmergencies = onSnapshot(collection(db, 'emergencies'), (snapshot) => {
+      setEmergencies(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // Causes Listener
+    const unsubCauses = onSnapshot(collection(db, 'causes'), (snapshot) => {
+      setCauses(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     // Users Listener
     const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
       setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -61,6 +74,8 @@ const AdminDashboard = () => {
       unsubAds();
       unsubArticles();
       unsubPolls();
+      unsubEmergencies();
+      unsubCauses();
       unsubUsers();
     };
   }, []);
@@ -119,19 +134,21 @@ const AdminDashboard = () => {
   };
 
   const handleSystemReset = async () => {
-    if (!confirm("CRITICAL WARNING: This will delete ALL dynamic content (Articles, Ads, Polls). User profiles and master settings will be preserved. Proceed?")) return;
+    if (!confirm("CRITICAL WARNING: This will delete ALL dynamic content (Articles, Ads, Polls, Emergencies, Causes). User profiles and master settings will be preserved. Proceed?")) return;
     
     setIsResetting(true);
     try {
-      // Manual batch delete simulation
-      const collectionsToClear = ['articles', 'ads', 'polls'];
-      for (const coll of collectionsToClear) {
-        // In a real production app, you'd use a server function or careful recursion
-        // For this sandbox, we'll clear what's currently loaded
-        const currentItems = coll === 'articles' ? articles : coll === 'ads' ? ads : polls;
-        await Promise.all(currentItems.map(item => deleteDoc(doc(db, coll, item.id))));
+      const collectionsToClear = ['articles', 'ads', 'polls', 'emergencies', 'causes'];
+
+      for (const collName of collectionsToClear) {
+        const { getDocs, query, collection } = await import('firebase/firestore');
+        const q = query(collection(db, collName));
+        const snapshot = await getDocs(q);
+        
+        await Promise.all(snapshot.docs.map(docSnap => deleteDoc(doc(db, collName, docSnap.id))));
       }
-      alert("System Reset Complete. Dynamics purged.");
+      
+      alert("System Reset Complete. Platform dynamics purged.");
     } catch (e) {
       handleFirestoreError(e, OperationType.DELETE, 'system-reset');
     } finally {
@@ -209,7 +226,7 @@ const AdminDashboard = () => {
               <BarChart3 className="w-10 h-10 text-blue-500 mb-6" />
               <h3 className="text-lg font-black uppercase mb-1">Live Audience</h3>
               <p className="text-[10px] text-zinc-500 font-bold uppercase mb-4">Direct active nodes</p>
-              <div className="text-xl font-black text-white">1,242 Nodes</div>
+              <div className="text-xl font-black text-white">{users.length} Nodes</div>
             </div>
 
             <div className="p-8 bg-zinc-900 border border-zinc-800 rounded-[2.5rem]">
@@ -444,7 +461,15 @@ const AdminDashboard = () => {
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center font-black text-lg text-orange-500 overflow-hidden">
                       {userItem.photoURL ? (
-                        <img src={userItem.photoURL} alt={userItem.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <div className="relative w-full h-full">
+                          <Image 
+                            src={userItem.photoURL} 
+                            alt={userItem.displayName} 
+                            fill 
+                            className="object-cover" 
+                            referrerPolicy="no-referrer" 
+                          />
+                        </div>
                       ) : (
                         userItem.displayName?.[0] || '?'
                       )}

@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
 const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => void, userProfile?: any }) => {
-  const [stats, setStats] = useState({ livesSaved: 124, activeRequests: 0, donors: 450 });
+  const [stats, setStats] = useState({ livesSaved: 0, activeRequests: 0, donors: 0 });
   const [urgentRequests, setUrgentRequests] = useState<any[]>([]);
   const [activeDonors, setActiveDonors] = useState<any[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
@@ -55,7 +55,7 @@ const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => v
 
     const unsubDonors = onSnapshot(qDonors, (snapshot) => {
       setActiveDonors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setStats(prev => ({ ...prev, donors: snapshot.size + 420 })); // Add offset for demo
+      setStats(prev => ({ ...prev, donors: snapshot.size }));
     });
 
     return () => {
