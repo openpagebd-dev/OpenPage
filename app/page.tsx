@@ -327,7 +327,7 @@ export default function Home() {
         </button>
 
         {/* Dynamic Canvas / Viewport */}
-        <div className={`flex-1 relative overflow-y-auto ${densityClasses[density]}`}>
+        <div className={`flex-1 relative overflow-y-auto overscroll-contain snap-none scroll-smooth hover:scroll-auto ${densityClasses[density]}`} style={{ WebkitOverflowScrolling: 'auto' }}>
           {activeTab === 'map' && (
             <div className="absolute inset-0 z-0">
               <MapComponent onViewDetails={(node) => {

@@ -2,16 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '@/lib/firebase';
-import { collection, query, orderBy, limit, onSnapshot, where, doc, updateDoc, increment, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot, where, doc, updateDoc, increment, arrayUnion, serverTimestamp, runTransaction, getDoc, deleteDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone, Zap, Film, FileText, Download, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone, Zap, Film, FileText, Download, ChevronLeft, ChevronRight, ExternalLink, Link as LinkIcon, Twitter, Facebook, Copy, Check, BarChart3 } from 'lucide-react';
 import Image from 'next/image';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
 import { useFirebase } from './firebase-provider';
 
 const NewsFeed = () => {
-  const { profile, isAdmin } = useFirebase();
+  const { user, profile, isAdmin } = useFirebase();
   const [articles, setArticles] = useState<any[]>([]);
   const [ads, setAds] = useState<any[]>([]);
   const [adsEnabled, setAdsEnabled] = useState(true);
@@ -29,6 +29,69 @@ const NewsFeed = () => {
     return [];
   });
   const [adIndices, setAdIndices] = useState<number[]>([]);
+  const [sharingArticle, setSharingArticle] = useState<string | null>(null);
+  const [copySuccess, setCopySuccess] = useState<string | null>(null);
+  const [userReactions, setUserReactions] = useState<Record<string, string>>({});
+  const [userPollVotes, setUserPollVotes] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!user || articles.length === 0) return;
+    
+    // Fetch user reactions for these articles locally
+    const fetchUserReactions = async () => {
+      const reactionsMap: Record<string, string> = {};
+      const votesMap: Record<string, string> = {};
+
+      const results = await Promise.all(articles.map(async (art) => {
+        const reactionDoc = await getDoc(doc(db, 'articles', art.id, 'userReactions', user.uid));
+        const voteDoc = art.poll ? await getDoc(doc(db, 'articles', art.id, 'pollVotes', user.uid)) : null;
+        return { 
+          id: art.id, 
+          type: reactionDoc.exists() ? reactionDoc.data().type : null,
+          vote: voteDoc?.exists() ? voteDoc.data().option : null
+        };
+      }));
+      
+      results.forEach(res => {
+        if (res.type) reactionsMap[res.id] = res.type;
+        if (res.vote) votesMap[res.id] = res.vote;
+      });
+      setUserReactions(reactionsMap);
+      setUserPollVotes(votesMap);
+    };
+
+    fetchUserReactions();
+  }, [articles, user]);
+
+  const handleShare = async (article: any, platform?: string) => {
+    const url = typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?article=${article.id}` : '';
+    const text = `Intelligence Briefing: ${article.title}`;
+
+    if (!platform && navigator.share) {
+      try {
+        await navigator.share({ title: article.title, text, url });
+        return;
+      } catch (e) { /* Fallback to menu */ }
+    }
+
+    if (platform === 'copy') {
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopySuccess(article.id);
+        setTimeout(() => setCopySuccess(null), 2000);
+      } catch (e) { console.error('Failed to copy', e); }
+    } else if (platform === 'twitter') {
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+    } else if (platform === 'facebook') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+    } else if (platform === 'whatsapp') {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+    }
+
+    if (!platform) {
+      setSharingArticle(sharingArticle === article.id ? null : article.id);
+    }
+  };
 
   useEffect(() => {
     // Global Settings
@@ -75,25 +138,76 @@ const NewsFeed = () => {
   };
 
   const handleReaction = async (articleId: string, type: string) => {
+    if (!user) return;
+    const userId = user.uid;
+    const artRef = doc(db, 'articles', articleId);
+    const userReactRef = doc(db, 'articles', articleId, 'userReactions', userId);
+
     try {
-      const artRef = doc(db, 'articles', articleId);
-      await updateDoc(artRef, {
-        [`reactions.${type}`]: increment(1)
+      await runTransaction(db, async (transaction) => {
+        const artSnap = await transaction.get(artRef);
+        if (!artSnap.exists()) return;
+        
+        const userReactSnap = await transaction.get(userReactRef);
+        const existingType = userReactSnap.exists() ? userReactSnap.data().type : null;
+
+        const reactions = artSnap.data().reactions || {};
+
+        if (existingType === type) {
+          // Toggle off: Decrement current
+          transaction.delete(userReactRef);
+          transaction.update(artRef, {
+            [`reactions.${type}`]: Math.max(0, (reactions[type] || 0) - 1),
+            updatedAt: serverTimestamp()
+          });
+        } else if (existingType) {
+          // Switch: Decrement old, increment new
+          transaction.update(userReactRef, { type, updatedAt: serverTimestamp() });
+          transaction.update(artRef, {
+            [`reactions.${existingType}`]: Math.max(0, (reactions[existingType] || 0) - 1),
+            [`reactions.${type}`]: (reactions[type] || 0) + 1,
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          // New: Increment new
+          transaction.set(userReactRef, { 
+            type, 
+            userId,
+            articleId,
+            createdAt: serverTimestamp() 
+          });
+          transaction.update(artRef, {
+            [`reactions.${type}`]: (reactions[type] || 0) + 1,
+            updatedAt: serverTimestamp()
+          });
+        }
       });
+      
+      // Speculative state update for instant feedback
+      setUserReactions(prev => {
+        const next = {...prev};
+        if (prev[articleId] === type) {
+          delete next[articleId];
+        } else {
+          next[articleId] = type;
+        }
+        return next;
+      });
+
     } catch (e) {
-      handleFirestoreError(e, OperationType.UPDATE, `article-${articleId}`);
+      handleFirestoreError(e, OperationType.UPDATE, `article-reaction-${articleId}`);
     }
   };
 
   const submitComment = async (articleId: string) => {
-    if (!commentText.trim() || !auth.currentUser) return;
+    if (!commentText.trim() || !user) return;
     try {
       const artRef = doc(db, 'articles', articleId);
       await updateDoc(artRef, {
         comments: arrayUnion({
           id: Math.random().toString(36).substr(2, 9),
-          uid: auth.currentUser.uid,
-          authorName: auth.currentUser.displayName || 'Contributor',
+          uid: user.uid,
+          authorName: user.displayName || 'Contributor',
           text: commentText,
           createdAt: new Date().toISOString()
         })
@@ -106,7 +220,7 @@ const NewsFeed = () => {
 
   const updateStatus = async (articleId: string, currentStatus: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!isAdmin && articles.find(a => a.id === articleId)?.authorId !== auth.currentUser?.uid) return;
+    if (!isAdmin && articles.find(a => a.id === articleId)?.authorId !== user?.uid) return;
 
     const nextStatusMap: Record<string, string> = {
       'Pending': 'Solved',
@@ -120,6 +234,36 @@ const NewsFeed = () => {
       await updateDoc(docRef, { itemStatus: nextStatus });
     } catch (error) {
       handleFirestoreError(error, OperationType.UPDATE, `articles/${articleId}`);
+    }
+  };
+
+  const handlePollVote = async (articleId: string, option: string) => {
+    if (!user) return;
+    const artRef = doc(db, 'articles', articleId);
+    const voteRef = doc(db, 'articles', articleId, 'pollVotes', user.uid);
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const artSnap = await transaction.get(artRef);
+        const voteSnap = await transaction.get(voteRef);
+
+        if (!artSnap.exists()) return;
+        if (voteSnap.exists()) return; 
+
+        const poll = artSnap.data().poll;
+        if (!poll) return;
+
+        transaction.set(voteRef, { option, createdAt: serverTimestamp() });
+        transaction.update(artRef, {
+          [`poll.votes.${option.replace(/\./g, '_')}`]: increment(1),
+          'poll.totalVotes': increment(1),
+          updatedAt: serverTimestamp()
+        });
+      });
+
+      setUserPollVotes(prev => ({ ...prev, [articleId]: option }));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `poll-vote-${articleId}`);
     }
   };
 
@@ -151,13 +295,14 @@ const NewsFeed = () => {
 
   return (
     <div className="space-y-6">
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="wait">
         {articles.flatMap((article, index) => {
           const items = [
             <motion.div
               key={article.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
               className="group relative bg-[#0a0a0b] border border-zinc-800/60 rounded-[2rem] overflow-hidden hover:border-orange-500/30 transition-all duration-500"
             >
               <div className="md:flex">
@@ -240,8 +385,8 @@ const NewsFeed = () => {
                       {article.itemStatus && (
                         <button 
                           onClick={(e) => updateStatus(article.id, article.itemStatus, e)}
-                          disabled={!isAdmin && article.authorId !== auth.currentUser?.uid}
-                          className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded border transition-all ${getStatusColor(article.itemStatus)} ${isAdmin || article.authorId === auth.currentUser?.uid ? 'hover:scale-105 active:scale-95 cursor-pointer' : 'cursor-default'}`}
+                          disabled={!isAdmin && article.authorId !== user?.uid}
+                          className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded border transition-all ${getStatusColor(article.itemStatus)} ${isAdmin || article.authorId === user?.uid ? 'hover:scale-105 active:scale-95 cursor-pointer' : 'cursor-default'}`}
                         >
                           {article.itemStatus}
                         </button>
@@ -251,6 +396,70 @@ const NewsFeed = () => {
                         {article.createdAt?.toDate?.() ? article.createdAt.toDate().toLocaleDateString() : 'Active Now'}
                       </span>
                     </div>
+
+                    {/* Integrated Polling Matrix */}
+                    {article.poll && (
+                      <div className="mt-8 mb-4 bg-zinc-900/40 border border-zinc-800/50 rounded-3xl p-6 md:p-8">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-8 h-8 rounded-lg bg-orange-600/20 border border-orange-500/20 flex items-center justify-center">
+                            <BarChart3 className="w-4 h-4 text-orange-500" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black uppercase tracking-widest text-white leading-none">Diagnostic Matrix</h4>
+                            <p className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Community Validation Protocol</p>
+                          </div>
+                        </div>
+                        
+                        <p className="text-sm font-bold text-zinc-300 mb-6 italic tracking-tight">{article.poll.question}</p>
+                        
+                        <div className="space-y-3">
+                          {article.poll.options.map((opt: string) => {
+                            const voteKey = opt.replace(/\./g, '_');
+                            const votes = article.poll.votes?.[voteKey] || 0;
+                            const total = article.poll.totalVotes || 0;
+                            const percentage = total > 0 ? Math.round((votes / total) * 100) : 0;
+                            const hasVoted = userPollVotes[article.id];
+
+                            return (
+                              <button
+                                key={opt}
+                                disabled={!!hasVoted}
+                                onClick={() => handlePollVote(article.id, opt)}
+                                className={`group/poll w-full relative h-12 rounded-xl border transition-all overflow-hidden ${hasVoted === opt ? 'border-orange-500 bg-orange-500/10' : 'border-zinc-800 bg-zinc-950/50 hover:border-zinc-600'}`}
+                              >
+                                {/* Progress Bar Overlay */}
+                                {(hasVoted || isAdmin) && (
+                                  <motion.div 
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${percentage}%` }}
+                                    className={`absolute inset-y-0 left-0 ${hasVoted === opt ? 'bg-orange-600/20' : 'bg-zinc-800/40'}`}
+                                  />
+                                )}
+                                
+                                <div className="absolute inset-0 px-4 flex items-center justify-between pointer-events-none">
+                                  <span className={`text-[10px] font-black uppercase tracking-wider transition-colors ${hasVoted === opt ? 'text-orange-500' : 'text-zinc-400 group-hover/poll:text-white'}`}>
+                                    {opt}
+                                  </span>
+                                  {(hasVoted || isAdmin) && (
+                                    <span className="text-[10px] font-mono font-bold text-zinc-500">
+                                      {percentage}% <span className="text-[8px] opacity-40">({votes})</span>
+                                    </span>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        
+                        {(userPollVotes[article.id] || isAdmin) && (
+                          <div className="mt-4 flex items-center justify-between px-1">
+                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600">Total Validations Recorded: {article.poll.totalVotes || 0}</span>
+                            <span className="text-[8px] font-black uppercase tracking-[0.2em] text-orange-500">Node Participation Verified</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     <h3 className="text-2xl md:text-3xl font-black text-white group-hover:text-orange-500 transition-colors mb-4 leading-[1.1] tracking-tighter italic uppercase break-words pr-2">
                       {article.title}
                     </h3>
@@ -280,7 +489,7 @@ const NewsFeed = () => {
                           <button 
                             key={react.type}
                             onClick={() => handleReaction(article.id, react.type)}
-                            className={`flex items-center text-[10px] font-black uppercase text-zinc-500 ${react.color} transition-all px-2 py-1 rounded-lg hover:bg-zinc-900 border border-transparent hover:border-zinc-800`}
+                            className={`flex items-center text-[10px] font-black uppercase transition-all px-2 py-1 rounded-lg hover:bg-zinc-900 border ${userReactions[article.id] === react.type ? 'text-orange-500 bg-orange-500/10 border-orange-500/20' : 'text-zinc-500 border-transparent hover:border-zinc-800'} ${react.color}`}
                           >
                             <span className="mr-1.5">{typeof react.icon === 'string' ? react.icon : react.icon}</span>
                             {article.reactions?.[react.type] || 0}
@@ -302,9 +511,58 @@ const NewsFeed = () => {
                         >
                           <Bookmark className={`w-5 h-5 ${bookmarks.includes(article.id) ? 'fill-orange-500' : ''}`} />
                         </button>
-                        <button className="p-2 text-zinc-500 hover:text-white hover:bg-zinc-900 rounded-xl transition-all">
-                          <Share2 className="w-5 h-5" />
-                        </button>
+                        <div className="relative">
+                          <button 
+                            onClick={() => handleShare(article)}
+                            className={`p-2 transition-all rounded-xl hover:bg-zinc-900 ${sharingArticle === article.id ? 'text-orange-500 bg-orange-500/10' : 'text-zinc-500 hover:text-white'}`}
+                          >
+                            <Share2 className="w-5 h-5" />
+                          </button>
+                          
+                          <AnimatePresence>
+                            {sharingArticle === article.id && (
+                              <motion.div 
+                                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                className="absolute bottom-full right-0 mb-4 w-48 bg-zinc-950 border border-zinc-800 rounded-2xl p-2 shadow-2xl z-50 overflow-hidden"
+                              >
+                                <div className="space-y-1">
+                                  <button 
+                                    onClick={() => handleShare(article, 'copy')}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-900 rounded-xl transition-all group/item"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover/item:border-orange-500/50 transition-colors">
+                                      {copySuccess === article.id ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-zinc-500" />}
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover/item:text-white">
+                                      {copySuccess === article.id ? 'Copied' : 'Copy Link'}
+                                    </span>
+                                  </button>
+                                  
+                                  {[
+                                    { id: 'twitter', name: 'Twitter / X', icon: <Twitter className="w-4 h-4" /> },
+                                    { id: 'facebook', name: 'Facebook', icon: <Facebook className="w-4 h-4" /> },
+                                    { id: 'whatsapp', name: 'WhatsApp', icon: <MessageSquare className="w-4 h-4" /> },
+                                  ].map((p) => (
+                                    <button 
+                                      key={p.id}
+                                      onClick={() => handleShare(article, p.id)}
+                                      className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-zinc-900 rounded-xl transition-all group/item"
+                                    >
+                                      <div className="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center group-hover/item:border-orange-500/50 transition-colors">
+                                        <div className="text-zinc-500 group-hover/item:text-orange-500 transition-colors">{p.icon}</div>
+                                      </div>
+                                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover/item:text-white">
+                                        {p.name}
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
                     </div>
 

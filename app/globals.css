@@ -12,6 +12,7 @@ body {
   color: #ffffff;
   font-family: var(--font-sans);
   line-height: 1.6;
+  scroll-behavior: auto !important;
 }
 
 /* Optimized for Bangla */

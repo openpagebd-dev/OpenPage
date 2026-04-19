@@ -6,7 +6,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { motion, AnimatePresence } from 'motion/react';
 import Image from 'next/image';
-import { X, Send, Image as ImageIcon, Type, Layout, Tag, AlertCircle, ShieldCheck as ShieldCircle, Upload, Film, FileText, Trash2, Plus } from 'lucide-react';
+import { X, Send, Image as ImageIcon, Type, Layout, Tag, AlertCircle, ShieldCheck as ShieldCircle, Upload, Film, FileText, Trash2, Plus, BarChart3, ListChecks } from 'lucide-react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
 interface Attachment {
@@ -32,6 +32,11 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
     category: initialCategory || 'Intelligence',
     imageUrl: '',
     itemStatus: initialStatus || 'Pending',
+  });
+  const [pollEnabled, setPollEnabled] = useState(false);
+  const [pollData, setPollData] = useState({
+    question: 'Is this intelligence briefing accurate?',
+    options: ['Confirmed Authentic', 'Needs Verification', 'Likely Fabricated', 'Inconclusive'],
   });
 
   const statuses = ['Pending', 'Solved', 'Failed'];
@@ -101,6 +106,12 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
         authorId: auth.currentUser.uid,
         authorName: auth.currentUser.displayName || 'Vanguard Node',
         status: 'pending', // Requires admin approval
+        poll: pollEnabled ? {
+          question: pollData.question,
+          options: pollData.options,
+          votes: pollData.options.reduce((acc: any, opt: string) => ({ ...acc, [opt]: 0 }), {}),
+          totalVotes: 0
+        } : null,
         reactions: {
           fire: 0,
           like: 0,
@@ -284,6 +295,86 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
                       <p className="text-[10px] font-black uppercase tracking-[0.2em]">Deployment Zone: Drop Files Here</p>
                     </div>
                   </div>
+                </div>
+
+                {/* Poll Builder Section */}
+                <div className="group">
+                  <div className="flex items-center justify-between px-2 mb-4">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Integrated Verification Poll</label>
+                    <button 
+                      type="button"
+                      onClick={() => setPollEnabled(!pollEnabled)}
+                      className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${pollEnabled ? 'bg-orange-500 text-white' : 'bg-zinc-900 text-zinc-500'}`}
+                    >
+                      {pollEnabled ? 'Poll Active' : 'Enable Poll'}
+                    </button>
+                  </div>
+
+                  <AnimatePresence>
+                    {pollEnabled && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-6 space-y-4">
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-zinc-600 px-1">Verification Query</label>
+                            <div className="flex items-center bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-3 focus-within:border-orange-500/30 transition-all">
+                              <ListChecks className="w-4 h-4 text-zinc-700 mr-3" />
+                              <input 
+                                type="text"
+                                className="bg-transparent border-none outline-none text-xs w-full text-white font-bold"
+                                value={pollData.question}
+                                onChange={e => setPollData({...pollData, question: e.target.value})}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-[9px] font-black uppercase tracking-widest text-zinc-600 px-1">Response Matrices (Options)</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {pollData.options.map((opt, idx) => (
+                                <div key={idx} className="flex items-center bg-zinc-950 border border-zinc-800 rounded-2xl px-4 py-2 group/opt">
+                                  <input 
+                                    className="bg-transparent border-none outline-none text-xs w-full text-zinc-300 font-bold"
+                                    value={opt}
+                                    onChange={e => {
+                                      const next = [...pollData.options];
+                                      next[idx] = e.target.value;
+                                      setPollData({...pollData, options: next});
+                                    }}
+                                  />
+                                  {pollData.options.length > 2 && (
+                                    <button 
+                                      type="button"
+                                      onClick={() => {
+                                        const next = pollData.options.filter((_, i) => i !== idx);
+                                        setPollData({...pollData, options: next});
+                                      }}
+                                      className="ml-2 p-1 text-zinc-700 hover:text-red-500 transition-colors opacity-0 group-hover/opt:opacity-100"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                              {pollData.options.length < 6 && (
+                                <button 
+                                  type="button"
+                                  onClick={() => setPollData({...pollData, options: [...pollData.options, 'New Option']})}
+                                  className="flex items-center justify-center gap-2 py-2 border border-dashed border-zinc-800 rounded-2xl text-zinc-600 hover:text-orange-500 hover:border-orange-500/50 transition-all text-[9px] font-black uppercase tracking-widest"
+                                >
+                                  <Plus className="w-3 h-3" /> Add Matrix
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 

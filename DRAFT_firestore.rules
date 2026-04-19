@@ -44,7 +44,7 @@ service cloud.firestore {
       return data.keys().hasAll(['title', 'content', 'category', 'authorId', 'status', 'createdAt']) &&
              data.title is string && data.title.size() <= 200 &&
              data.content is string && data.content.size() <= 50000 &&
-             data.category is string && data.category.size() <= 60 &&
+             data.category is string && data.category.size() <= 50 &&
              data.authorId is string && data.authorId.size() <= 128 &&
              data.status in ['pending', 'published'] &&
              data.createdAt is timestamp;
@@ -101,37 +101,23 @@ service cloud.firestore {
                     incoming().status == 'pending' &&
                     incoming().createdAt == request.time &&
                     isValidArticle(incoming()) &&
-                    incoming().keys().size() >= 6 && incoming().keys().size() <= 18;
+                    incoming().keys().size() >= 6 && incoming().keys().size() <= 12;
                     
       allow update: if isAdmin() || (
         isSignedIn() && 
+        isValidArticle(incoming()) &&
+        existing().authorId == request.auth.uid &&
         incoming().authorId == existing().authorId &&
         incoming().createdAt == existing().createdAt &&
         incoming().updatedAt == request.time && (
-          // Action: Author edits their own pending article (strict schema check)
-          (isOwner(existing().authorId) && existing().status == 'pending' && isValidArticle(incoming()) &&
-           incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'category', 'imageUrl', 'media', 'itemStatus', 'updatedAt', 'authorName', 'reactions', 'comments', 'views', 'poll'])) ||
-          // Action: Global interactions (Reactions/Comments/Views/Polls) - More lenient schema
-          (incoming().diff(existing()).affectedKeys().hasOnly(['reactions', 'comments', 'views', 'updatedAt', 'poll'])) ||
-          // Action: Author updates tactical status
-          (isOwner(existing().authorId) && incoming().diff(existing()).affectedKeys().hasOnly(['itemStatus', 'updatedAt']))
+          // Action: Update content while pending
+          (existing().status == 'pending' && incoming().diff(existing()).affectedKeys().hasOnly(['title', 'content', 'category', 'imageUrl', 'media', 'itemStatus', 'updatedAt', 'authorName', 'reactions', 'comments', 'views'])) ||
+          // Action: Global interactions (any status)
+          (incoming().diff(existing()).affectedKeys().hasOnly(['reactions', 'comments', 'views', 'updatedAt', 'itemStatus']))
         )
       );
 
       allow delete: if isAdmin() || (isSignedIn() && existing().authorId == request.auth.uid && existing().status == 'pending');
-
-      match /userReactions/{userId} {
-        allow read: if isSignedIn();
-        allow create, update: if isOwner(userId) && 
-                                incoming().userId == userId && 
-                                incoming().articleId == articleId;
-        allow delete: if isOwner(userId) || isAdmin();
-      }
-
-      match /pollVotes/{userId} {
-        allow read: if isSignedIn();
-        allow create: if isOwner(userId) && incoming().createdAt == request.time;
-      }
     }
 
     match /emergencies/{emergencyId} {

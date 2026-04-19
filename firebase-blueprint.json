@@ -2,7 +2,7 @@
   "entities": {
     "User": {
       "title": "User",
-      "description": "User profile with role-based access.",
+      "description": "User profile with role-based access and biological data.",
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
@@ -10,16 +10,16 @@
         "email": { "type": "string" },
         "photoURL": { "type": "string" },
         "role": { "type": "string", "enum": ["reader", "contributor", "admin"] },
-        "bloodGroup": { "type": "string", "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] },
+        "bloodGroup": { "type": "string" },
         "isDonor": { "type": "boolean" },
-        "location": { "type": "object" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "email", "role"]
     },
     "Article": {
       "title": "Article",
-      "description": "News article or editorial content.",
+      "description": "News article or editorial content with multi-stage approval.",
       "type": "object",
       "properties": {
         "title": { "type": "string" },
@@ -28,6 +28,8 @@
         "authorId": { "type": "string" },
         "authorName": { "type": "string" },
         "imageUrl": { "type": "string" },
+        "itemStatus": { "type": "string", "enum": ["Pending", "Solved", "Failed"] },
+        "status": { "type": "string", "enum": ["pending", "published"] },
         "media": { 
           "type": "array", 
           "items": { 
@@ -39,13 +41,22 @@
             }
           } 
         },
-        "views": { "type": "number" },
         "reactions": { "type": "object" },
-        "location": { "type": "object" },
-        "status": { "type": "string", "enum": ["draft", "published"] },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "comments": { "type": "array" },
+        "views": { "type": "number" },
+        "poll": {
+          "type": "object",
+          "properties": {
+            "question": { "type": "string" },
+            "options": { "type": "array", "items": { "type": "string" } },
+            "votes": { "type": "object" },
+            "totalVotes": { "type": "number" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["title", "content", "category", "authorId", "status"]
+      "required": ["title", "content", "category", "authorId", "status", "createdAt"]
     },
     "Emergency": {
       "title": "Emergency",
