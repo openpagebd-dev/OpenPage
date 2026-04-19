@@ -103,7 +103,7 @@ const DonorDirectory = () => {
             className="w-full bg-zinc-900 border border-zinc-800 focus:border-orange-500/50 rounded-2xl py-4 pl-12 pr-4 text-sm text-white placeholder:text-zinc-600 outline-none transition-all"
           />
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-2 xl:pb-0 no-scrollbar">
+        <div className="flex gap-2 overflow-x-auto pb-2 xl:pb-0 scrollbar-hide">
           {/* Blood Group Quick Filter scrollable on mobile */}
           <div className="flex gap-2 shrink-0">
             {bloodGroups.slice(0, 5).map(bg => (

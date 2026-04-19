@@ -3,13 +3,49 @@
 
 :root {
   --font-sans: "Hind Siliguri", "Inter", sans-serif;
-  --bg-obsidian: #050505;
-  --accent-orange: #f27d26;
+  --bg-obsidian: #000000; /* Was #050505, made deeper for contrast */
+  --accent-orange: #ea580c;
+}
+
+:root[data-theme="cyber"] {
+  --bg-obsidian: #020617; 
+  --color-zinc-950: #020617; /* slate-950 */
+  --color-zinc-900: #0f172a; /* slate-900 */
+  --color-zinc-800: #1e293b; /* slate-800 */
+  --color-orange-600: #2563eb; /* blue-600 */
+  --color-orange-500: #3b82f6; /* blue-500 */
+}
+
+:root[data-theme="matrix"] {
+  --bg-obsidian: #052e16; 
+  --color-zinc-950: #052e16; /* green-950 */
+  --color-zinc-900: #14532d; /* green-900 */
+  --color-zinc-800: #166534; /* green-800 */
+  --color-orange-600: #16a34a; /* green-600 */
+  --color-orange-500: #22c55e; /* green-500 */
+}
+
+:root[data-theme="light"] {
+  --bg-obsidian: #ffffff;
+  --color-zinc-950: #ffffff; 
+  --color-zinc-900: #f4f4f5; 
+  --color-zinc-800: #e4e4e7; 
+  --color-zinc-700: #d4d4d8; 
+  --color-zinc-600: #71717a;
+  --color-zinc-500: #71717a;
+  --color-zinc-400: #3f3f46;
+  --color-zinc-300: #3f3f46;
+  --color-zinc-200: #18181b;
+  --color-zinc-100: #09090b;
+  --color-zinc-50:  #000000;
+  
+  --color-white: #000000;
+  --color-black: #ffffff;
 }
 
 body {
-  background-color: var(--bg-obsidian);
-  color: #ffffff;
+  background-color: var(--color-zinc-950, var(--bg-obsidian));
+  color: var(--color-white, #ffffff);
   font-family: var(--font-sans);
   line-height: 1.6;
   scroll-behavior: auto !important;

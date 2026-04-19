@@ -53,6 +53,7 @@ export default function Home() {
   const { user, profile, loading, isAdmin } = useFirebase();
   const [activeTab, setActiveTab] = useState<'map' | 'news' | 'blood' | 'admin' | 'causes' | 'analytics' | 'donors'>('map');
   const [density, setDensity] = useState<'Minimal' | 'Standard' | 'Tactical'>('Tactical');
+  const [theme, setTheme] = useState<'obsidian' | 'cyber' | 'matrix' | 'light'>('obsidian');
   const [briefing, setBriefing] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<null | 'notifications' | 'settings' | 'help' | 'submit-content' | 'blood-request' | 'node-detail' | 'profile'>(null);
@@ -110,6 +111,14 @@ export default function Home() {
       getIntelligenceBriefing(sampleNews).then(res => setBriefing(res || "Briefing unavailable."));
     }
   }, [activeTab, briefing]);
+
+  useEffect(() => {
+    if (theme === 'obsidian') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+  }, [theme]);
 
   const login = () => signInWithPopup(auth, new GoogleAuthProvider());
   const logout = () => signOut(auth);
@@ -171,7 +180,7 @@ export default function Home() {
             { id: 'donors', label: 'Donor Directory', icon: Users },
             { id: 'causes', label: 'Active Causes', icon: Shield },
             { id: 'analytics', label: 'Intelligence', icon: BarChart4 },
-            { id: 'admin', label: 'Admin Ops', icon: LayoutDashboard },
+            ...(isAdmin ? [{ id: 'admin', label: 'Admin Ops', icon: LayoutDashboard }] : [])
           ].map((item) => (
             <button
               key={item.id}
@@ -532,27 +541,46 @@ export default function Home() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-zinc-950 border border-zinc-800 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-22xl relative"
+              className="bg-zinc-950 border border-zinc-800 w-[95vw] md:w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide rounded-[2rem] md:rounded-[2.5rem] shadow-2xl relative"
             >
-              <div className="p-8">
-                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-black uppercase tracking-tight text-white px-2 border-l-4 border-orange-600">Vanguard Settings</h2>
+              <div className="p-6 md:p-8">
+                <div className="flex justify-between items-center mb-6 md:mb-8 shrink-0">
+                  <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-white px-2 border-l-4 border-orange-600">Vanguard Settings</h2>
                   <button onClick={() => setActiveModal(null)} className="p-2 hover:bg-zinc-900 rounded-full text-zinc-500 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
                 
-                <div className="space-y-6">
-                  <div className="p-6 bg-zinc-900/50 rounded-3xl border border-zinc-800/50 hover:border-zinc-700 transition-all group">
-                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-4 flex items-center gap-2">
+                <div className="space-y-4 md:space-y-6">
+                  <div className="p-4 md:p-6 bg-zinc-900/50 rounded-[2rem] md:rounded-3xl border border-zinc-800/50 hover:border-zinc-700 transition-all group">
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3 md:mb-4 flex items-center gap-2">
+                       <Layout className="w-3.5 h-3.5" /> Interface Theme
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                       {['obsidian', 'cyber', 'matrix', 'light'].map(t => {
+                         return (
+                          <button 
+                            key={t} 
+                            onClick={() => setTheme(t as any)}
+                            className={`py-3 px-2 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${theme === t ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}
+                          >
+                            {t}
+                          </button>
+                        );
+                       })}
+                    </div>
+                  </div>
+
+                  <div className="p-4 md:p-6 bg-zinc-900/50 rounded-[2rem] md:rounded-3xl border border-zinc-800/50 hover:border-zinc-700 transition-all group">
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-3 md:mb-4 flex items-center gap-2">
                        <Layout className="w-3.5 h-3.5" /> Interface Density
                     </h3>
-                    <div className="flex gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       {['Minimal', 'Standard', 'Tactical'].map(d => (
                         <button 
                           key={d} 
                           onClick={() => setDensity(d as any)}
-                          className={`flex-1 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${density === d ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}
+                          className={`py-3 px-1 rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all ${density === d ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'bg-zinc-800 text-zinc-500 hover:text-white'}`}
                         >
                           {d}
                         </button>
@@ -560,36 +588,36 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="p-6 bg-zinc-900/50 rounded-3xl border border-zinc-800/50 flex items-center justify-between group hover:border-zinc-700 transition-all">
+                  <div className="p-4 md:p-6 bg-zinc-900/50 rounded-[2rem] md:rounded-3xl border border-zinc-800/50 flex flex-col md:flex-row md:items-center justify-between gap-4 group hover:border-zinc-700 transition-all">
                     <div>
                       <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
                         <Key className="w-3.5 h-3.5 text-zinc-500" /> Google Passkey
                       </h3>
-                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tight mt-1 leading-tight">Enhanced biometric platform security</p>
+                      <p className="text-[9px] sm:text-[10px] text-zinc-500 uppercase font-bold tracking-tight mt-1 leading-tight">Enhanced biometric platform security</p>
                     </div>
                     <button 
                       onClick={() => alert("Passkey Protocol Initiated via Google Identity.")}
-                      className="px-4 py-2 bg-zinc-800 text-[9px] font-black uppercase text-white hover:bg-zinc-700 rounded-xl transition-all"
+                      className="w-full md:w-auto px-4 py-3 md:py-2 bg-zinc-800 text-[9px] font-black uppercase text-white hover:bg-zinc-700 rounded-xl transition-all text-center"
                     >
                       Configure
                     </button>
                   </div>
 
-                  <div className="p-6 bg-zinc-900/50 rounded-3xl border border-zinc-800/50 flex items-center justify-between group hover:border-zinc-700 transition-all">
+                  <div className="p-4 md:p-6 bg-zinc-900/50 rounded-[2rem] md:rounded-3xl border border-zinc-800/50 flex items-center justify-between group hover:border-zinc-700 transition-all">
                     <div>
                       <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
                          <Zap className="w-3.5 h-3.5 text-orange-500" /> Neural Mapping
                       </h3>
-                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tight mt-1 leading-tight">AI-assisted visual path prediction</p>
+                      <p className="text-[9px] sm:text-[10px] text-zinc-500 uppercase font-bold tracking-tight mt-1 leading-tight">AI-assisted visual path prediction</p>
                     </div>
-                    <div className="w-12 h-6 bg-orange-600 rounded-full relative cursor-pointer shadow-inner">
+                    <div className="w-12 h-6 shrink-0 bg-orange-600 rounded-full relative cursor-pointer shadow-inner">
                       <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-md" />
                     </div>
                   </div>
 
-                  <div className="p-6 bg-zinc-950 rounded-3xl border border-zinc-900/50">
+                  <div className="p-4 md:p-6 bg-zinc-950 rounded-[2rem] md:rounded-3xl border border-zinc-900/50">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-zinc-600 mb-2">Platform Node Identity</h3>
-                    <div className="text-xs font-mono text-zinc-500 truncate bg-black p-3 rounded-xl border border-zinc-900">
+                    <div className="text-[10px] font-mono text-zinc-500 truncate bg-black p-3 rounded-xl border border-zinc-900 w-full overflow-x-auto scrollbar-hide">
                       ap-southeast-1.vanguard.openpage-v2
                     </div>
                   </div>
@@ -597,7 +625,7 @@ export default function Home() {
 
                 <button 
                   onClick={() => setActiveModal(null)}
-                  className="w-full mt-8 py-4 bg-white text-black rounded-3xl font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-600 hover:text-white transition-all shadow-xl"
+                  className="w-full mt-6 md:mt-8 py-3 md:py-4 bg-white text-black rounded-[1.5rem] md:rounded-3xl font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-600 hover:text-white transition-all shadow-xl"
                 >
                   Confirm Sync
                 </button>
@@ -617,9 +645,9 @@ export default function Home() {
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-zinc-950 border border-zinc-800 w-full max-w-lg rounded-[2.5rem] overflow-hidden shadow-2xl"
+              className="bg-zinc-950 border border-zinc-800 w-[95vw] md:w-full max-w-lg max-h-[90vh] overflow-y-auto scrollbar-hide rounded-[2rem] md:rounded-[2.5rem] shadow-2xl relative"
             >
-              <div className="p-8 text-center">
+              <div className="p-6 md:p-8 text-center">
                 <AlertCircle className="w-16 h-16 text-orange-500 mx-auto mb-6" />
                 <h2 className="text-3xl font-black uppercase mb-2">Emergency Response</h2>
                 <p className="text-zinc-500 text-sm mb-8">Select the emergency type. Your location will be automatically tagged for immediate community assistance.</p>

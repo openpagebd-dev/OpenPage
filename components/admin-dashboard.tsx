@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
+import { useFirebase } from '@/components/firebase-provider';
 import { collection, onSnapshot, query, doc, updateDoc, setDoc, deleteDoc, serverTimestamp, addDoc } from 'firebase/firestore';
 import { 
   Zap, 
@@ -22,6 +23,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
 const AdminDashboard = () => {
+    const { isAdmin } = useFirebase();
     const [activeTab, setActiveTab] = useState<'overview' | 'ads' | 'content' | 'polls' | 'users' | 'system' | 'emergencies' | 'causes' | 'trends'>('overview');
     const [globalSettings, setGlobalSettings] = useState<any>({ adsEnabled: true });
     const [ads, setAds] = useState<any[]>([]);
@@ -44,6 +46,8 @@ const AdminDashboard = () => {
   const [newTrend, setNewTrend] = useState({ tag: '#', count: '0', order: 1, active: true });
 
   useEffect(() => {
+    if (!isAdmin) return;
+
     // Global Settings Listener
     const unsubSettings = onSnapshot(doc(db, 'settings', 'global'), (docSnap) => {
       if (docSnap.exists()) setGlobalSettings(docSnap.data());
@@ -94,7 +98,7 @@ const AdminDashboard = () => {
       unsubUsers();
       unsubTrends();
     };
-  }, []);
+  }, [isAdmin]);
 
   const approveArticle = async (id: string) => {
     try {
@@ -253,7 +257,7 @@ const AdminDashboard = () => {
           <h2 className="text-3xl font-black uppercase tracking-tight text-white">Editorial Control</h2>
           <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">Operational Command Center</p>
         </div>
-        <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 overflow-x-auto">
+        <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 overflow-x-auto scrollbar-hide">
           {(['overview', 'ads', 'content', 'polls', 'emergencies', 'causes', 'users', 'trends', 'system'] as const).map(tab => (
             <button
               key={tab}
@@ -422,12 +426,12 @@ const AdminDashboard = () => {
             className="space-y-4"
           >
             {articles.map(article => (
-              <div key={article.id} className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] flex items-center justify-between group">
-                <div className="flex items-center gap-6">
-                  <div className={`w-2 h-10 rounded-full ${article.status === 'published' ? 'bg-green-500' : 'bg-orange-500'}`} />
+              <div key={article.id} className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4 group">
+                <div className="flex items-start md:items-center gap-4 md:gap-6">
+                  <div className={`w-2 h-10 shrink-0 rounded-full ${article.status === 'published' ? 'bg-green-500' : 'bg-orange-500'}`} />
                   <div>
-                    <h4 className="font-bold text-white mb-1">{article.title}</h4>
-                    <div className="flex items-center gap-3">
+                    <h4 className="font-bold text-white mb-1 line-clamp-1">{article.title}</h4>
+                    <div className="flex flex-wrap items-center gap-2 md:gap-3">
                       <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{article.category}</span>
                       <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">• {article.authorName}</span>
                     </div>
@@ -516,10 +520,10 @@ const AdminDashboard = () => {
 
             <div className="lg:col-span-2 space-y-4">
               {polls.map(poll => (
-                <div key={poll.id} className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] flex items-center justify-between group">
-                  <div className="flex-1">
-                    <h4 className="font-bold text-white mb-2">{poll.question}</h4>
-                    <div className="flex gap-4">
+                <div key={poll.id} className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] flex flex-col md:flex-row md:items-center justify-between gap-4 group">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-bold text-white mb-4 line-clamp-2">{poll.question}</h4>
+                    <div className="flex flex-wrap gap-4">
                       {poll.options.map((opt: any, i: number) => (
                         <div key={i} className="flex flex-col">
                           <span className="text-[10px] text-zinc-500 font-bold uppercase">{opt.label}</span>
