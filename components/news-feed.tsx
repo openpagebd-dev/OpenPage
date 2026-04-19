@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { db, auth } from '@/lib/firebase';
 import { collection, query, orderBy, limit, onSnapshot, where, doc, updateDoc, increment, arrayUnion, serverTimestamp, runTransaction, getDoc, deleteDoc } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone, Zap, Film, FileText, Download, ChevronLeft, ChevronRight, ExternalLink, Link as LinkIcon, Twitter, Facebook, Copy, Check, BarChart3 } from 'lucide-react';
+import { Flame, Eye, Clock, Bookmark, Share2, MessageSquare, Send, ThumbsUp, Heart, Lightbulb, AlertTriangle, Megaphone, Zap, Film, FileText, Download, ChevronLeft, ChevronRight, ExternalLink, Link as LinkIcon, Twitter, Facebook, Copy, Check, BarChart3, User } from 'lucide-react';
 import Image from 'next/image';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
@@ -428,23 +428,38 @@ const NewsFeed = () => {
                 )}
                 <div className="p-8 md:p-12 lg:p-14 flex flex-col min-w-0 flex-1">
                   <div>
-                    <div className="flex items-center gap-3 mb-6 flex-wrap">
-                      <span className="px-3 py-1 bg-orange-600/10 text-orange-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-orange-500/20 shadow-sm">
-                        {article.category || 'Intelligence'}
-                      </span>
-                      {article.itemStatus && (
-                        <button 
-                          onClick={(e) => updateStatus(article.id, article.itemStatus, e)}
-                          disabled={!isAdmin && article.authorId !== user?.uid}
-                          className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded border transition-all ${getStatusColor(article.itemStatus)} ${isAdmin || article.authorId === user?.uid ? 'hover:scale-105 active:scale-95 cursor-pointer' : 'cursor-default'}`}
-                        >
-                          {article.itemStatus}
-                        </button>
-                      )}
-                      <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center">
-                        <Clock className="w-3 h-3 mr-1.5" />
-                        {article.createdAt?.toDate?.() ? article.createdAt.toDate().toLocaleDateString() : 'Active Now'}
-                      </span>
+                    <div className="flex items-center gap-4 mb-6 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1 bg-orange-600/10 text-orange-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-orange-500/20 shadow-sm">
+                          {article.category || 'Intelligence'}
+                        </span>
+                        {article.itemStatus && (
+                          <button 
+                            onClick={(e) => updateStatus(article.id, article.itemStatus, e)}
+                            disabled={!isAdmin && article.authorId !== user?.uid}
+                            className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded border transition-all ${getStatusColor(article.itemStatus)} ${isAdmin || article.authorId === user?.uid ? 'hover:scale-105 active:scale-95 cursor-pointer' : 'cursor-default'}`}
+                          >
+                            {article.itemStatus}
+                          </button>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-4">
+                        <span className="text-[10px] text-zinc-400 font-black uppercase tracking-widest flex items-center">
+                          <User className="w-3 h-3 mr-1.5 text-zinc-600" />
+                          {article.authorName || 'Vanguard Agent'}
+                        </span>
+                        
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center">
+                          <Clock className="w-3 h-3 mr-1.5 text-zinc-600" />
+                          {article.createdAt?.toDate?.() ? article.createdAt.toDate().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Syncing...'}
+                        </span>
+
+                        <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest flex items-center">
+                          <FileText className="w-3 h-3 mr-1.5 text-zinc-600" />
+                          {article.content ? article.content.trim().split(/\s+/).length : 0} Words
+                        </span>
+                      </div>
                     </div>
 
                     {/* Integrated Polling Matrix */}

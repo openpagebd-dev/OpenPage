@@ -69,6 +69,13 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
+    function isValidTrend(data) {
+      return data.keys().hasAll(['tag', 'count', 'active']) &&
+             data.tag is string && data.tag.size() <= 100 &&
+             data.count is string && data.count.size() <= 20 &&
+             data.active is bool;
+    }
+
     // ===============================================================
     // Match Groups
     // ===============================================================
@@ -167,6 +174,16 @@ service cloud.firestore {
     match /ads/{adId} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    match /trends/{trendId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidTrend(incoming());
+      allow update: if isAdmin() && (
+        isValidTrend(incoming()) && 
+        incoming().updatedAt == request.time
+      );
+      allow delete: if isAdmin();
     }
 
     match /settings/global {

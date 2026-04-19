@@ -22,15 +22,16 @@ import { motion, AnimatePresence } from 'motion/react';
 import { handleFirestoreError, OperationType } from '@/lib/firestore-errors';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'ads' | 'content' | 'polls' | 'users' | 'system' | 'emergencies' | 'causes'>('overview');
-  const [globalSettings, setGlobalSettings] = useState<any>({ adsEnabled: true });
-  const [ads, setAds] = useState<any[]>([]);
-  const [articles, setArticles] = useState<any[]>([]);
-  const [polls, setPolls] = useState<any[]>([]);
-  const [emergencies, setEmergencies] = useState<any[]>([]);
-  const [causes, setCauses] = useState<any[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [isResetting, setIsResetting] = useState(false);
+    const [activeTab, setActiveTab] = useState<'overview' | 'ads' | 'content' | 'polls' | 'users' | 'system' | 'emergencies' | 'causes' | 'trends'>('overview');
+    const [globalSettings, setGlobalSettings] = useState<any>({ adsEnabled: true });
+    const [ads, setAds] = useState<any[]>([]);
+    const [articles, setArticles] = useState<any[]>([]);
+    const [polls, setPolls] = useState<any[]>([]);
+    const [emergencies, setEmergencies] = useState<any[]>([]);
+    const [causes, setCauses] = useState<any[]>([]);
+    const [users, setUsers] = useState<any[]>([]);
+    const [trends, setTrends] = useState<any[]>([]);
+    const [isResetting, setIsResetting] = useState(false);
   
   // Editorial and Management States
   const [editingItem, setEditingItem] = useState<{ id: string, coll: string, data: any } | null>(null);
@@ -40,6 +41,7 @@ const AdminDashboard = () => {
   const [newPoll, setNewPoll] = useState({ question: '', options: ['', ''] });
   const [newEmergency, setNewEmergency] = useState({ type: 'blood_request', title: '', hospital: '', bloodGroup: 'B+', contactInfo: '', status: 'active', description: '' });
   const [newCause, setNewCause] = useState({ title: '', description: '', goal: 1000, raised: 0, active: true, imageUrl: '' });
+  const [newTrend, setNewTrend] = useState({ tag: '#', count: '0', order: 1, active: true });
 
   useEffect(() => {
     // Global Settings Listener
@@ -77,6 +79,11 @@ const AdminDashboard = () => {
       setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    // Trends Listener
+    const unsubTrends = onSnapshot(collection(db, 'trends'), (snapshot) => {
+      setTrends(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubSettings();
       unsubAds();
@@ -85,6 +92,7 @@ const AdminDashboard = () => {
       unsubEmergencies();
       unsubCauses();
       unsubUsers();
+      unsubTrends();
     };
   }, []);
 
@@ -225,6 +233,19 @@ const AdminDashboard = () => {
     }
   };
 
+  const createTrend = async () => {
+    if (!newTrend.tag || !newTrend.count) return;
+    try {
+      await addDoc(collection(db, 'trends'), {
+        ...newTrend,
+        updatedAt: serverTimestamp()
+      });
+      setNewTrend({ tag: '#', count: '0', order: trends.length + 1, active: true });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, 'trends');
+    }
+  };
+
   return (
     <div className="space-y-8 font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -233,7 +254,7 @@ const AdminDashboard = () => {
           <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">Operational Command Center</p>
         </div>
         <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 overflow-x-auto">
-          {(['overview', 'ads', 'content', 'polls', 'emergencies', 'causes', 'users', 'system'] as const).map(tab => (
+          {(['overview', 'ads', 'content', 'polls', 'emergencies', 'causes', 'users', 'trends', 'system'] as const).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -762,6 +783,80 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {activeTab === 'trends' && (
+          <motion.div 
+            key="trends"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+          >
+            <div className="lg:col-span-1 bg-zinc-950 border border-zinc-800 p-8 rounded-[2.5rem] shadow-xl h-fit">
+              <h3 className="text-lg font-black uppercase mb-6 tracking-tight">Post Trending Topic</h3>
+              <div className="space-y-4 mb-6">
+                <input 
+                  type="text" 
+                  placeholder="#Hashtag"
+                  className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
+                  value={newTrend.tag}
+                  onChange={e => setNewTrend({...newTrend, tag: e.target.value})}
+                />
+                <input 
+                  type="text" 
+                  placeholder="Report Count (e.g. 14.2k)"
+                  className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
+                  value={newTrend.count}
+                  onChange={e => setNewTrend({...newTrend, count: e.target.value})}
+                />
+                <input 
+                  type="number" 
+                  placeholder="Order Priority"
+                  className="w-full bg-zinc-900 border border-zinc-800 p-4 rounded-2xl outline-none focus:border-orange-500 transition-all text-sm"
+                  value={newTrend.order}
+                  onChange={e => setNewTrend({...newTrend, order: parseInt(e.target.value) || 0})}
+                />
+              </div>
+              <button 
+                onClick={createTrend}
+                className="w-full py-4 bg-orange-600 hover:bg-orange-500 text-white rounded-2xl font-black uppercase text-xs tracking-widest transition-all shadow-lg shadow-orange-600/20"
+              >
+                Sync with Pulse
+              </button>
+            </div>
+
+            <div className="lg:col-span-2 space-y-4">
+              {trends.map(trend => (
+                <div key={trend.id} className="bg-zinc-900 border border-zinc-800 p-6 rounded-[2rem] flex items-center justify-between group">
+                  <div className="flex items-center gap-6">
+                    <div className="w-12 h-12 rounded-2xl bg-orange-600/10 border border-orange-500/20 flex items-center justify-center font-black text-xs text-orange-500">
+                      {trend.order}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white mb-1">{trend.tag}</h4>
+                      <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">{trend.count} reports</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setEditingItem({ id: trend.id, coll: 'trends', data: trend })}
+                      className="p-2 text-zinc-500 hover:text-white"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteDocGeneric('trends', trend.id)} className="p-2 text-red-500 hover:bg-red-500/10 rounded-xl">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {trends.length === 0 && (
+                <div className="py-20 text-center border-2 border-dashed border-zinc-800 rounded-[2.5rem]">
+                  <p className="text-zinc-500 font-black uppercase tracking-widest text-xs">Trending Pulse collection is empty</p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}

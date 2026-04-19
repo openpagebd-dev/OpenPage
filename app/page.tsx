@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useFirebase } from '@/components/firebase-provider';
-import { auth } from '@/lib/firebase';
+import { db, auth } from '@/lib/firebase';
+import { collection, onSnapshot, query, orderBy, limit, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { 
   Bell, 
@@ -63,12 +64,38 @@ export default function Home() {
     { id: 3, text: "Local Grid expansion complete", time: "1 hour ago", unread: false },
   ]);
 
-  const trends = [
-    { tag: "#DhakaPower", count: "14.2k" },
-    { tag: "#BloodDonorHero", count: "8.9k" },
-    { tag: "#SylhetEvacuation", count: "12.1k" },
-    { tag: "#VanguardIntelligence", count: "5.4k" },
-  ];
+  const [trends, setTrends] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'trends'),
+      orderBy('order', 'asc'),
+      limit(10)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        // Seed default trends if collection is empty
+        const defaultTrends = [
+          { tag: "#DhakaPower", count: "14.2k", order: 1, active: true },
+          { tag: "#BloodDonorHero", count: "8.9k", order: 2, active: true },
+          { tag: "#SylhetEvacuation", count: "12.1k", order: 3, active: true },
+          { tag: "#VanguardIntelligence", count: "5.4k", order: 4, active: true },
+        ];
+        
+        defaultTrends.forEach(async (t) => {
+          await setDoc(doc(collection(db, 'trends')), {
+            ...t,
+            updatedAt: serverTimestamp()
+          });
+        });
+      } else {
+        setTrends(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     // Generate AI briefing if on Home/News

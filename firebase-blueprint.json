@@ -117,6 +117,19 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "description", "goalAmount", "currentAmount", "supporters", "urgent"]
+    },
+    "Trend": {
+      "title": "Trend",
+      "description": "Trending hashtag or topic with report count.",
+      "type": "object",
+      "properties": {
+        "tag": { "type": "string" },
+        "count": { "type": "string" },
+        "order": { "type": "number" },
+        "active": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["tag", "count", "active"]
     }
   },
   "firestore": {
@@ -143,6 +156,10 @@
     "causes/{causeId}": {
       "schema": "Cause",
       "description": "Humanitarian causes."
+    },
+    "trends/{trendId}": {
+      "schema": "Trend",
+      "description": "Dynamic trending topics/hashtags."
     },
     "settings/global": {
       "schema": "object",
