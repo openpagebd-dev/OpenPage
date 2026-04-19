@@ -62,7 +62,7 @@ const ProfileModal = ({ profile, onClose }: ProfileModalProps) => {
                 <User className="text-zinc-400 w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-2xl font-black uppercase italic tracking-tight text-white leading-none">Intelligence Profile</h2>
+                <h2 className="text-2xl font-black uppercase tracking-tight text-white leading-none">Intelligence Profile</h2>
                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Personnel Authorization</p>
               </div>
             </div>

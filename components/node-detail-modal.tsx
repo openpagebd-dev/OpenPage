@@ -50,7 +50,7 @@ const NodeDetailModal = ({ node, onClose }: NodeDetailModalProps) => {
               <div className={`text-[10px] font-black uppercase tracking-[0.2em] ${config.color} mb-1`}>
                 {config.label}
               </div>
-              <h2 className="text-3xl font-black uppercase italic tracking-tighter leading-none">
+              <h2 className="text-3xl font-black uppercase tracking-tight leading-none">
                 {node.title}
               </h2>
             </div>
@@ -92,7 +92,7 @@ const NodeDetailModal = ({ node, onClose }: NodeDetailModalProps) => {
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl">
                 <div className="text-[10px] font-black uppercase text-zinc-500 tracking-widest mb-2">Blood Group</div>
-                <div className="text-4xl font-black text-white italic">{node.bloodGroup}</div>
+                <div className="text-4xl font-black text-white">{node.bloodGroup}</div>
               </div>
               <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl">
                 <div className="text-[10px] font-black uppercase text-zinc-500 tracking-widest mb-2">Facility</div>

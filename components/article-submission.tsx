@@ -1,3 +1,4 @@
+// Article Submission Protocol Component
 'use client';
 
 import React, { useState } from 'react';
@@ -146,7 +147,7 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
                 <Send className="text-white w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-2xl font-black uppercase italic tracking-tight text-white leading-none">Content Submission</h2>
+                <h2 className="text-2xl font-black uppercase text-white leading-none">Content Submission</h2>
                 <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">Initialize Node Protocol</p>
               </div>
             </div>
@@ -155,8 +156,8 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="space-y-6">
               <div className="group">
                 <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Primary Header</label>
                 <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 focus-within:border-orange-500/50 transition-all">
@@ -172,7 +173,7 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
                 </div>
               </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="group">
                     <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Classification</label>
                     <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-3 focus-within:border-orange-500/50 transition-all">
@@ -232,8 +233,8 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
                 {/* Media Upload Zone */}
                 <div className="group">
                   <label className="text-[10px] font-black uppercase tracking-widest text-zinc-500 px-2 mb-2 block">Tactical Media Attachments (Photos, Videos, Files)</label>
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                       <AnimatePresence>
                         {attachments.map((att, idx) => (
                           <motion.div 
@@ -289,7 +290,7 @@ const ArticleSubmission = ({ onClose, onSuccess, initialCategory, initialStatus 
                         e.preventDefault();
                         processFiles(Array.from(e.dataTransfer.files));
                       }}
-                      className="py-8 border-2 border-dashed border-zinc-900 rounded-3xl flex flex-col items-center justify-center bg-zinc-950 hover:border-orange-500/30 transition-all text-zinc-600 hover:text-orange-500"
+                      className="py-12 border-2 border-dashed border-zinc-900 rounded-[2rem] flex flex-col items-center justify-center bg-zinc-950 hover:border-orange-500/30 transition-all text-zinc-600 hover:text-orange-500"
                     >
                       <Upload className="w-10 h-10 mb-2 opacity-20" />
                       <p className="text-[10px] font-black uppercase tracking-[0.2em]">Deployment Zone: Drop Files Here</p>

@@ -142,7 +142,7 @@ const MapComponent = ({ onViewDetails }: MapComponentProps) => {
                     {marker.type === 'blood_request' && <Droplets className="w-4 h-4 text-white" />}
                   </div>
                   <div>
-                    <h3 className="font-black uppercase italic tracking-tighter text-sm leading-none">{marker.title}</h3>
+                    <h3 className="font-black uppercase tracking-tight text-sm leading-none">{marker.title}</h3>
                     <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mt-1">{marker.type}</p>
                   </div>
                 </div>
@@ -155,7 +155,7 @@ const MapComponent = ({ onViewDetails }: MapComponentProps) => {
                   <div className="mb-4 p-3 bg-red-600/10 border border-red-600/20 rounded-xl space-y-2">
                      <div className="flex items-center justify-between">
                        <span className="text-[10px] font-black uppercase text-zinc-500 tracking-widest">Group</span>
-                       <span className="text-xs font-black text-white bg-red-600 px-1.5 py-0.5 rounded italic">{marker.bloodGroup || 'Any'}</span>
+                       <span className="text-xs font-black text-white bg-red-600 px-1.5 py-0.5 rounded">{marker.bloodGroup || 'Any'}</span>
                      </div>
                      <div className="flex items-center gap-2">
                        <HospitalIcon className="w-3 h-3 text-red-500" />

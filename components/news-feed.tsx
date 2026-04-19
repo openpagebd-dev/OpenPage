@@ -294,7 +294,7 @@ const NewsFeed = () => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-12">
       <AnimatePresence mode="wait">
         {articles.flatMap((article, index) => {
           const items = [
@@ -376,7 +376,7 @@ const NewsFeed = () => {
                     </div>
                   </div>
                 )}
-                <div className="p-6 md:p-10 flex flex-col min-w-0 flex-1">
+                <div className="p-8 md:p-12 lg:p-14 flex flex-col min-w-0 flex-1">
                   <div>
                     <div className="flex items-center gap-3 mb-6 flex-wrap">
                       <span className="px-3 py-1 bg-orange-600/10 text-orange-500 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-orange-500/20 shadow-sm">
@@ -410,10 +410,10 @@ const NewsFeed = () => {
                           </div>
                         </div>
                         
-                        <p className="text-sm font-bold text-zinc-300 mb-6 italic tracking-tight">{article.poll.question}</p>
+                        <p className="text-sm font-bold text-zinc-300 mb-6 tracking-tight">{article.poll.question}</p>
                         
                         <div className="space-y-3">
-                          {article.poll.options.map((opt: string) => {
+                          {article.poll.options.map((opt: string, i: number) => {
                             const voteKey = opt.replace(/\./g, '_');
                             const votes = article.poll.votes?.[voteKey] || 0;
                             const total = article.poll.totalVotes || 0;
@@ -422,7 +422,7 @@ const NewsFeed = () => {
 
                             return (
                               <button
-                                key={opt}
+                                key={`${article.id}-opt-${i}`}
                                 disabled={!!hasVoted}
                                 onClick={() => handlePollVote(article.id, opt)}
                                 className={`group/poll w-full relative h-12 rounded-xl border transition-all overflow-hidden ${hasVoted === opt ? 'border-orange-500 bg-orange-500/10' : 'border-zinc-800 bg-zinc-950/50 hover:border-zinc-600'}`}
@@ -460,7 +460,7 @@ const NewsFeed = () => {
                       </div>
                     )}
 
-                    <h3 className="text-2xl md:text-3xl font-black text-white group-hover:text-orange-500 transition-colors mb-4 leading-[1.1] tracking-tighter italic uppercase break-words pr-2">
+                    <h3 className="text-2xl md:text-3xl font-black text-white group-hover:text-orange-500 transition-colors mb-4 leading-[1.1] tracking-tight uppercase break-words pr-2">
                       {article.title}
                     </h3>
                     <div className="relative group/content overflow-hidden">
@@ -483,7 +483,7 @@ const NewsFeed = () => {
                   </div>
                   
                   <div className={`flex flex-col gap-6 ${!expandedArticles.includes(article.id) ? 'mt-auto' : 'mt-10'}`}>
-                    <div className="flex items-center justify-between pt-8 border-t border-zinc-900/80">
+                    <div className="flex items-center justify-between pt-10 border-t border-zinc-900/80">
                       <div className="flex items-center gap-2 md:gap-3 overflow-x-auto scrollbar-hide no-scrollbar -ml-1">
                         {reactionTypes.map(react => (
                           <button 

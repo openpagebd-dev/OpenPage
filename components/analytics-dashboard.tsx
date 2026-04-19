@@ -156,7 +156,7 @@ const AnalyticsDashboard = () => {
     <div className="space-y-8 p-4 md:p-8 font-sans max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">
+          <h1 className="text-4xl font-black uppercase tracking-tight text-white">
             Intelligence <span className="text-orange-600">Analytics</span>
           </h1>
           <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">Operational Insights & Node Engagement</p>
@@ -322,7 +322,7 @@ const AnalyticsDashboard = () => {
       ) : (
         <div className="flex flex-col items-center justify-center p-20 text-center space-y-6">
           <Shield className="w-16 h-16 text-zinc-800" />
-          <h3 className="text-xl font-black uppercase italic tracking-widest">Access Protocol Restricted</h3>
+          <h3 className="text-xl font-black uppercase tracking-widest">Access Protocol Restricted</h3>
           <p className="text-zinc-500 text-sm max-w-sm">Please synchronize your node identity to access biometric analytics and engagement vectors.</p>
         </div>
       )}

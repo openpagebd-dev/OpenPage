@@ -73,7 +73,7 @@ const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => v
   );
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-10 relative">
       {/* Action Bar */}
       <button 
         onClick={onRequestBlood}
@@ -84,7 +84,7 @@ const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => v
             <Plus className="text-white w-6 h-6" />
           </div>
           <div className="text-left">
-            <div className="text-sm font-black uppercase tracking-tight text-white">Request Emergency Blood</div>
+            <div className="text-sm font-black uppercase text-white">Request Emergency Blood</div>
             <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Broadcast to nearby donors</div>
           </div>
         </div>
@@ -94,13 +94,13 @@ const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => v
       </button>
 
       {/* Stats Board */}
-      <div className="grid grid-cols-3 gap-2 md:gap-3">
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
         {[
           { label: 'Saved', value: stats.livesSaved, icon: Heart, color: 'text-red-500' },
           { label: 'Active', value: stats.activeRequests, icon: Droplets, color: 'text-red-600' },
           { label: 'Donors', value: stats.donors, icon: Users, color: 'text-zinc-400' },
         ].map((stat, i) => (
-          <div key={i} className="bg-zinc-900 border border-zinc-800 p-3 md:p-4 rounded-2xl text-center">
+          <div key={i} className="bg-zinc-900 border border-zinc-800 p-5 md:p-8 rounded-2xl text-center">
             <stat.icon className={`w-4 h-4 md:w-5 md:h-5 mx-auto mb-1.5 md:mb-2 ${stat.color}`} />
             <div className="text-lg md:text-xl font-bold text-white">{stat.value}</div>
             <div className="text-[8px] md:text-[10px] uppercase tracking-wider text-zinc-500 font-bold leading-none">{stat.label}</div>
@@ -115,7 +115,7 @@ const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => v
             <div className="relative z-10 flex items-center justify-between">
               <div>
                 <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70 mb-1">Biological Sync Active</div>
-                <div className="text-lg font-black uppercase text-white tracking-tighter italic">Matched {userProfile.isDonor ? 'Requests' : 'Donors'} for {userProfile.bloodGroup}</div>
+                <div className="text-lg font-black uppercase text-white tracking-tight">Matched {userProfile.isDonor ? 'Requests' : 'Donors'} for {userProfile.bloodGroup}</div>
               </div>
               <ShieldCheck className="w-8 h-8 text-white/20" />
             </div>
@@ -203,7 +203,7 @@ const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => v
                   <span className="bg-red-600 text-white text-[10px] font-black px-1.5 py-0.5 rounded leading-none">
                     {req.bloodGroup}
                   </span>
-                  <span className="text-xs font-bold text-white uppercase tracking-tight truncate max-w-[120px]">
+                  <span className="text-xs font-bold text-white uppercase truncate max-w-[120px]">
                     {req.hospital}
                   </span>
                 </div>
@@ -235,7 +235,7 @@ const BloodNetwork = ({ onRequestBlood, userProfile }: { onRequestBlood: () => v
               <div className="w-16 h-16 bg-red-600 rounded-2xl mx-auto flex items-center justify-center mb-4 shadow-2xl shadow-red-600/40 pulsate">
                 <Heart className="w-8 h-8 text-white fill-white" />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter">Connection Bridge</h3>
+              <h3 className="text-xl font-black uppercase tracking-tight">Connection Bridge</h3>
               <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest mt-1">Direct donor-patient link</p>
             </div>
 

@@ -229,7 +229,7 @@ const AdminDashboard = () => {
     <div className="space-y-8 font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">Editorial Control</h2>
+          <h2 className="text-3xl font-black uppercase tracking-tight text-white">Editorial Control</h2>
           <p className="text-zinc-500 text-xs font-bold uppercase tracking-[0.2em]">Operational Command Center</p>
         </div>
         <div className="flex bg-zinc-900 p-1 rounded-2xl border border-zinc-800 overflow-x-auto">
@@ -776,7 +776,7 @@ const AdminDashboard = () => {
             <div className="w-20 h-20 bg-red-600/10 border border-red-500/20 rounded-[2rem] flex items-center justify-center mx-auto mb-8">
               <Zap className="w-10 h-10 text-red-500" />
             </div>
-            <h3 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-4">Total System Reset</h3>
+            <h3 className="text-3xl font-black uppercase tracking-tight text-white mb-4">Total System Reset</h3>
             <p className="text-zinc-500 text-sm leading-relaxed mb-10">
               Initializing this protocol will permanently remove all dynamic data streams including articles, ads, and polls from the Vanguard network. This action cannot be reversed. User node identities will remain intact.
             </p>
@@ -811,7 +811,7 @@ const AdminDashboard = () => {
               <div className="p-10">
                 <div className="flex justify-between items-center mb-8">
                   <div>
-                    <h3 className="text-2xl font-black uppercase italic tracking-tighter text-white">Editorial Override</h3>
+                    <h3 className="text-2xl font-black uppercase tracking-tight text-white">Editorial Override</h3>
                     <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mt-1">Modifying {editingItem.coll} node: {editingItem.id}</p>
                   </div>
                   <button onClick={() => setEditingItem(null)} className="p-3 hover:bg-zinc-900 rounded-full text-zinc-500">

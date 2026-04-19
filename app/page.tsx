@@ -46,6 +46,7 @@ const BloodRequestModal = dynamic(() => import('@/components/blood-request-modal
 const NodeDetailModal = dynamic(() => import('@/components/node-detail-modal'), { ssr: false });
 const ProfileModal = dynamic(() => import('@/components/profile-modal'), { ssr: false });
 const DonorDirectory = dynamic(() => import('@/components/donor-directory'), { ssr: false });
+const GlobalPolls = dynamic(() => import('@/components/global-polls'), { ssr: false });
 
 export default function Home() {
   const { user, profile, loading, isAdmin } = useFirebase();
@@ -128,14 +129,14 @@ export default function Home() {
             <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-600/20">
               <Zap className="text-white w-6 h-6 fill-white" />
             </div>
-            <span className="text-xl font-black uppercase tracking-tight text-white">OpenPage</span>
+            <span className="text-xl font-black uppercase text-white">OpenPage</span>
           </div>
           <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden p-2 hover:bg-zinc-900 rounded-xl transition-colors">
             <X className="w-5 h-5 text-zinc-500" />
           </button>
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto scrollbar-hide">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto scrollbar-hide">
           {[
             { id: 'map', label: 'Live Map', icon: MapIcon },
             { id: 'news', label: 'News Feed', icon: Newspaper },
@@ -151,7 +152,7 @@ export default function Home() {
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${activeTab === item.id ? 'bg-orange-600 text-white shadow-lg shadow-orange-600/20' : 'text-zinc-500 hover:bg-zinc-900 hover:text-white'}`}
             >
               <item.icon className="w-5 h-5" />
-              <span className="font-bold text-sm tracking-tight">{item.label}</span>
+              <span className="font-bold text-sm">{item.label}</span>
             </button>
           ))}
         </nav>
@@ -206,7 +207,7 @@ export default function Home() {
             <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-zinc-900 rounded-xl active:scale-95 transition-transform">
               <Menu className="w-5 h-5 text-zinc-400" />
             </button>
-            <span className="font-black text-base uppercase tracking-tight">OpenPage</span>
+            <span className="font-black text-base uppercase">OpenPage</span>
           </div>
 
           <div className="hidden lg:flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl px-4 py-2 w-72 xl:w-96 group focus-within:border-orange-500/50 transition-all">
@@ -338,13 +339,13 @@ export default function Home() {
           )}
 
           {activeTab === 'news' && (
-            <div className="max-w-6xl mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-8">
-              <div className="flex-1 space-y-8">
+            <div className="max-w-6xl mx-auto p-4 md:p-10 flex flex-col lg:flex-row gap-12">
+              <div className="flex-1 space-y-12">
                 {/* News Action Header */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-8 bg-orange-600 rounded-full" />
-                    <h2 className="text-3xl font-black uppercase italic tracking-tighter">Live Broadcasts</h2>
+                    <h2 className="text-3xl font-black uppercase tracking-tight">Live Broadcasts</h2>
                   </div>
                   {user && (
                     <button 
@@ -396,6 +397,8 @@ export default function Home() {
                   </div>
                 </div>
 
+                <GlobalPolls />
+
                 {/* Simulated Ad Placement */}
                 <div className="bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-700 rounded-3xl p-6 aspect-square flex flex-col justify-center items-center text-center group relative overflow-hidden">
                   <div className="absolute inset-0 bg-orange-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -416,7 +419,7 @@ export default function Home() {
                   <div className="w-20 h-20 bg-zinc-900 rounded-3xl flex items-center justify-center mx-auto border border-zinc-800">
                     <Shield className="w-10 h-10 text-zinc-700" />
                   </div>
-                  <h2 className="text-3xl font-black uppercase tracking-tighter text-white italic">Access Restricted</h2>
+                  <h2 className="text-3xl font-black uppercase tracking-tight text-white">Access Restricted</h2>
                   <p className="text-zinc-500 text-sm max-w-md mx-auto leading-relaxed">
                     The Advanced Dashboard is only available to certified platform contributors and administrators. 
                     Please return to your assigned news briefing or request a higher clearance level.
@@ -438,10 +441,10 @@ export default function Home() {
           )}
 
           {activeTab === 'blood' && (
-            <div className="max-w-2xl mx-auto p-4 md:p-8 space-y-8">
-              <div className="text-center">
+            <div className="max-w-3xl mx-auto p-4 md:p-12 space-y-12">
+              <div className="text-center mb-4">
                 <Droplets className="w-16 h-16 text-red-600 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(220,38,38,0.3)]" />
-                <h2 className="text-4xl font-black uppercase tracking-tighter italic text-white mb-2">Blood Network</h2>
+                <h2 className="text-4xl font-black uppercase tracking-tight text-white mb-2">Blood Network</h2>
                 <p className="text-zinc-500 text-sm font-bold uppercase tracking-widest leading-relaxed">Every second counts. Every drop saves lives.</p>
               </div>
               <BloodNetwork 
@@ -452,14 +455,14 @@ export default function Home() {
           )}
 
           {activeTab === 'causes' && (
-            <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-10">
+            <div className="max-w-5xl mx-auto p-4 md:p-12 space-y-12">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Heart className="w-4 h-4 md:w-5 md:h-5 text-red-500 fill-red-500/20" />
                     <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-red-500">Humanity Direct</span>
                   </div>
-                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter italic text-white leading-tight">Critical Causes</h2>
+                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white leading-tight">Critical Causes</h2>
                 </div>
                 <p className="text-zinc-500 text-xs md:text-sm font-medium max-w-sm md:border-l-2 border-zinc-800 md:pl-6 leading-relaxed mt-2 md:mt-0">
                   Support verified local humanitarian efforts through the OpenPage Direct Support Network.
@@ -470,14 +473,14 @@ export default function Home() {
           )}
 
           {activeTab === 'donors' && (
-            <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-10">
+            <div className="max-w-7xl mx-auto p-4 md:p-12 space-y-12">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="w-4 h-4 md:w-5 md:h-5 text-orange-500 fill-orange-500/20" />
                     <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-orange-500">Global Network</span>
                   </div>
-                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tighter italic text-white leading-tight">Donor Directory</h2>
+                  <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white leading-tight">Donor Directory</h2>
                 </div>
                 <p className="text-zinc-500 text-xs md:text-sm font-medium max-w-sm md:border-l-2 border-zinc-800 md:pl-6 leading-relaxed mt-2 md:mt-0">
                   Search and connect with the Vanguard tactical donor network. Direct verified synchronization for emergency response.
@@ -506,7 +509,7 @@ export default function Home() {
             >
               <div className="p-8">
                 <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-black uppercase italic tracking-tight text-white px-2 border-l-4 border-orange-600">Vanguard Settings</h2>
+                  <h2 className="text-2xl font-black uppercase tracking-tight text-white px-2 border-l-4 border-orange-600">Vanguard Settings</h2>
                   <button onClick={() => setActiveModal(null)} className="p-2 hover:bg-zinc-900 rounded-full text-zinc-500 transition-colors">
                     <X className="w-5 h-5" />
                   </button>
@@ -535,7 +538,7 @@ export default function Home() {
                       <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
                         <Key className="w-3.5 h-3.5 text-zinc-500" /> Google Passkey
                       </h3>
-                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter mt-1 leading-tight">Enhanced biometric platform security</p>
+                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tight mt-1 leading-tight">Enhanced biometric platform security</p>
                     </div>
                     <button 
                       onClick={() => alert("Passkey Protocol Initiated via Google Identity.")}
@@ -550,7 +553,7 @@ export default function Home() {
                       <h3 className="text-xs font-black uppercase tracking-widest text-white flex items-center gap-2">
                          <Zap className="w-3.5 h-3.5 text-orange-500" /> Neural Mapping
                       </h3>
-                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tighter mt-1 leading-tight">AI-assisted visual path prediction</p>
+                      <p className="text-[10px] text-zinc-500 uppercase font-black tracking-tight mt-1 leading-tight">AI-assisted visual path prediction</p>
                     </div>
                     <div className="w-12 h-6 bg-orange-600 rounded-full relative cursor-pointer shadow-inner">
                       <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-md" />

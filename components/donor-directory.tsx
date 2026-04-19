@@ -228,7 +228,7 @@ const DonorDirectory = () => {
             <Users className="w-10 h-10 text-zinc-800" />
           </div>
           <div>
-            <h3 className="text-xl font-black uppercase text-white italic">Zero Operatives Found</h3>
+            <h3 className="text-xl font-black uppercase text-white">Zero Operatives Found</h3>
             <p className="text-zinc-500 text-sm mt-2">No donors match your current intelligence parameters.</p>
           </div>
           <button 
