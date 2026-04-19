@@ -34,6 +34,8 @@ const NewsFeed = () => {
   const [userReactions, setUserReactions] = useState<Record<string, string>>({});
   const [userPollVotes, setUserPollVotes] = useState<Record<string, string>>({});
 
+  const [sortBy, setSortBy] = useState<'latest' | 'trending'>('latest');
+
   useEffect(() => {
     if (!user || articles.length === 0) return;
     
@@ -293,10 +295,58 @@ const NewsFeed = () => {
     { type: 'warning', icon: <AlertTriangle className="w-3.5 h-3.5" />, color: 'hover:text-red-600' },
   ];
 
+  const sortedArticles = [...articles].sort((a, b) => {
+    if (sortBy === 'latest') {
+      const timeA = a.createdAt?.toMillis?.() || (a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime()) || 0;
+      const timeB = b.createdAt?.toMillis?.() || (b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime()) || 0;
+      return timeB - timeA;
+    }
+    if (sortBy === 'trending') {
+      const getScore = (art: any) => {
+        const reactions = Object.values(art.reactions || {}).reduce((sum: number, val: any) => sum + (val || 0), 0);
+        const commentCount = art.comments?.length || 0;
+        const totalVotes = art.poll?.totalVotes || 0;
+        return reactions + commentCount * 2 + totalVotes;
+      };
+      return getScore(b) - getScore(a);
+    }
+    return 0;
+  });
+
   return (
     <div className="space-y-12">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-orange-600/20 border border-orange-500/20 flex items-center justify-center shadow-lg shadow-orange-600/10">
+            <Zap className="w-6 h-6 text-orange-500" />
+          </div>
+          <div>
+            <h2 className="text-xl font-black uppercase tracking-widest text-white leading-tight">Intelligence Stream</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+              <p className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Active Sync Protocol</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center self-start md:self-auto gap-2 bg-zinc-900/40 p-1.5 rounded-2xl border border-zinc-800/60 backdrop-blur-xl">
+          <button 
+            onClick={() => setSortBy('latest')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${sortBy === 'latest' ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/30' : 'text-zinc-500 hover:text-white hover:bg-zinc-800/80'}`}
+          >
+            <Clock className="w-3.5 h-3.5" /> Latest
+          </button>
+          <button 
+            onClick={() => setSortBy('trending')}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${sortBy === 'trending' ? 'bg-orange-600 text-white shadow-xl shadow-orange-600/30' : 'text-zinc-500 hover:text-white hover:bg-zinc-800/80'}`}
+          >
+            <Flame className="w-3.5 h-3.5" /> Trending
+          </button>
+        </div>
+      </div>
+
       <AnimatePresence mode="wait">
-        {articles.flatMap((article, index) => {
+        {sortedArticles.flatMap((article, index) => {
           const items = [
             <motion.div
               key={article.id}
